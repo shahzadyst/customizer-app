@@ -135,7 +135,8 @@ export default function Customizers() {
         ) : (
           <s-stack direction="block" gap="base">
             {customizers.map((customizer) => {
-              const customizerId = customizer._id ? customizer._id.toString() : 'no-id';
+              const customizerId = customizer.customizerId || (customizer._id ? customizer._id.toString() : 'no-id');
+              const dbId = customizer._id ? customizer._id.toString() : '';
 
               return (
                 <s-box
@@ -147,7 +148,7 @@ export default function Customizers() {
                   <s-stack direction="block" gap="base">
                     <s-stack direction="inline" gap="base" alignment="space-between">
                       <Link
-                        to={customizerId !== 'no-id' ? `/app/customizers/${customizerId}` : '#'}
+                        to={dbId ? `/app/customizers/${dbId}` : '#'}
                         style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
                       >
                         <s-stack direction="inline" gap="base" alignment="center">
@@ -179,11 +180,11 @@ export default function Customizers() {
                           {customizer.isActive ? "Active" : "Inactive"}
                         </s-badge>
 
-                        {customizerId !== 'no-id' && (
+                        {dbId && (
                           <>
                             <fetcher.Form method="post" style={{ display: 'inline' }}>
                               <input type="hidden" name="action" value="updateStatus" />
-                              <input type="hidden" name="id" value={customizerId} />
+                              <input type="hidden" name="id" value={dbId} />
                               <input type="hidden" name="isActive" value={(!customizer.isActive).toString()} />
                               <s-button
                                 size="small"
@@ -196,7 +197,7 @@ export default function Customizers() {
 
                             <fetcher.Form method="post" style={{ display: 'inline' }}>
                               <input type="hidden" name="action" value="delete" />
-                              <input type="hidden" name="id" value={customizerId} />
+                              <input type="hidden" name="id" value={dbId} />
                               <s-button
                                 size="small"
                                 variant="destructive"
@@ -210,7 +211,7 @@ export default function Customizers() {
                       </s-stack>
                     </s-stack>
 
-                    {customizerId !== 'no-id' && (
+                    {customizerId && customizerId !== 'no-id' && (
                       <>
                         <s-divider />
                         <s-banner tone="info">

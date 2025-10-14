@@ -2,10 +2,13 @@ import { Link, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { getCustomizers } from "../models/customizer.server";
+import { migrateCustomizerIds } from "../models/migrate-customizer-ids.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
+
+  await migrateCustomizerIds();
 
   const customizers = await getCustomizers(shopDomain);
 
@@ -192,11 +195,12 @@ export default function Index() {
           ) : (
             <s-stack direction="block" gap="base">
               {customizers.slice(0, 3).map((customizer) => {
-                const customizerId = customizer._id ? customizer._id.toString() : 'no-id';
+                const customizerId = customizer.customizerId || (customizer._id ? customizer._id.toString() : 'no-id');
+                const dbId = customizer._id ? customizer._id.toString() : '';
                 return (
                   <Link
-                    key={customizerId}
-                    to={customizerId !== 'no-id' ? `/app/customizers/${customizerId}` : '#'}
+                    key={dbId || customizerId}
+                    to={dbId ? `/app/customizers/${dbId}` : '#'}
                     style={{ textDecoration: 'none' }}
                   >
                     <s-box padding="base" borderWidth="base" borderRadius="base" style={{ cursor: 'pointer' }}>
