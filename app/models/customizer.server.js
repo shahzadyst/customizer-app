@@ -3,30 +3,40 @@ import { getDb, collections } from '../mongodb.server.js';
 export async function getCustomizers(shop) {
   const db = await getDb();
   const customizers = await db.collection(collections.customizers).find({ shop }).sort({ createdAt: -1 }).toArray();
-  return customizers;
+  return customizers.map(customizer => ({
+    ...customizer,
+    _id: customizer._id.toString()
+  }));
 }
 
 export async function getCustomizer(shop, identifier) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
 
+  let customizer;
+
   if (identifier.startsWith('cust-')) {
-    const customizer = await db.collection(collections.customizers).findOne({
+    customizer = await db.collection(collections.customizers).findOne({
       customizerId: identifier,
       shop
     });
-    return customizer;
-  }
-
-  if (!ObjectId.isValid(identifier)) {
+  } else if (ObjectId.isValid(identifier)) {
+    customizer = await db.collection(collections.customizers).findOne({
+      _id: new ObjectId(identifier),
+      shop
+    });
+  } else {
     return null;
   }
 
-  const customizer = await db.collection(collections.customizers).findOne({
-    _id: new ObjectId(identifier),
-    shop
-  });
-  return customizer;
+  if (customizer) {
+    return {
+      ...customizer,
+      _id: customizer._id.toString()
+    };
+  }
+
+  return null;
 }
 
 async function generateCustomizerId(db) {
