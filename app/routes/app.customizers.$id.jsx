@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useFetcher, Link, useNavigate } from "react-router";
-import { json } from "@react-router/node";
 import { authenticate } from "../shopify.server";
 import { getCustomizer } from "../models/customizer.server";
 import {
@@ -78,7 +77,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addColor": {
@@ -88,7 +87,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addSize": {
@@ -101,7 +100,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addUsageType": {
@@ -112,7 +111,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addAcrylicShape": {
@@ -123,7 +122,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addBackboardColor": {
@@ -134,7 +133,7 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "addHangingOption": {
@@ -145,49 +144,49 @@ export const action = async ({ request, params }) => {
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
         });
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteFont": {
         await deleteFont(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteColor": {
         await deleteColor(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteSize": {
         await deleteSize(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteUsageType": {
         await deleteUsageType(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteAcrylicShape": {
         await deleteAcrylicShape(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteBackboardColor": {
         await deleteBackboardColor(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       case "deleteHangingOption": {
         await deleteHangingOption(shop, formData.get("id"));
-        return json({ success: true });
+        return { success: true };
       }
 
       default:
-        return json({ error: "Invalid action" }, { status: 400 });
+        return Response.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error) {
-    return json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 };
 
