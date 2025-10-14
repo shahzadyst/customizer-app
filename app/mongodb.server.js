@@ -27,6 +27,7 @@ export async function getDb() {
 }
 
 export const collections = {
+  customizers: 'customizers',
   configurations: 'configurations',
   fonts: 'fonts',
   colors: 'colors',

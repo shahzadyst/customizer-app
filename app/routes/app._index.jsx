@@ -10,12 +10,13 @@ import {
   getBackboardColors,
   getHangingOptions,
 } from "../models/signage.server";
+import { getCustomizers } from "../models/customizer.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions, customizers] = await Promise.all([
     getFonts(shopDomain),
     getColors(shopDomain),
     getSizes(shopDomain),
@@ -23,6 +24,7 @@ export const loader = async ({ request }) => {
     getAcrylicShapes(shopDomain),
     getBackboardColors(shopDomain),
     getHangingOptions(shopDomain),
+    getCustomizers(shopDomain),
   ]);
 
   const stats = {
@@ -35,11 +37,11 @@ export const loader = async ({ request }) => {
     hangingOptions: hangingOptions.length,
   };
 
-  return { stats, shopDomain };
+  return { stats, shopDomain, customizers };
 };
 
 export default function Index() {
-  const { stats, shopDomain } = useLoaderData();
+  const { stats, shopDomain, customizers } = useLoaderData();
 
   const totalOptions = Object.values(stats).reduce((sum, count) => sum + count, 0);
 
@@ -47,8 +49,7 @@ export default function Index() {
     <s-page heading="Signage Customizer App">
       <s-section heading="Welcome to Your Signage Customizer">
         <s-paragraph>
-          This app allows you to create a fully customizable signage experience for your customers.
-          Configure fonts, colors, sizes, and other options, then embed the customizer on your storefront.
+          Create fully customizable signage experiences for your customers with multiple customizers, each configurable independently.
         </s-paragraph>
       </s-section>
 
@@ -58,6 +59,7 @@ export default function Index() {
             <s-stack direction="block" gap="base">
               <s-heading level={3}>Configuration Status</s-heading>
               <s-stack direction="block" gap="tight">
+                <s-text>Active Customizers: {customizers.filter(c => c.isActive).length} of {customizers.length}</s-text>
                 <s-text>Total Options Configured: {totalOptions}</s-text>
                 <s-text>Fonts: {stats.fonts}</s-text>
                 <s-text>Colors: {stats.colors}</s-text>
@@ -70,12 +72,23 @@ export default function Index() {
             </s-stack>
           </s-box>
 
-          {totalOptions === 0 && (
+          {customizers.length === 0 && (
             <s-banner tone="warning">
               <s-stack direction="block" gap="tight">
                 <s-text weight="semibold">Getting Started</s-text>
                 <s-text>
-                  You haven't configured any options yet. Go to the Settings page to add fonts, colors, sizes, and other customization options.
+                  You haven't created any customizers yet. Create your first customizer to get started.
+                </s-text>
+              </s-stack>
+            </s-banner>
+          )}
+
+          {totalOptions === 0 && customizers.length > 0 && (
+            <s-banner tone="warning">
+              <s-stack direction="block" gap="tight">
+                <s-text weight="semibold">Configure Options</s-text>
+                <s-text>
+                  You have customizers but no options configured. Go to Settings to add fonts, colors, sizes, and other options.
                 </s-text>
               </s-stack>
             </s-banner>
@@ -87,9 +100,21 @@ export default function Index() {
         <s-stack direction="block" gap="large">
           <s-box padding="base" borderWidth="base" borderRadius="base">
             <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 1: Configure Options</s-heading>
+              <s-heading level={3}>Step 1: Create a Customizer</s-heading>
               <s-paragraph>
-                Go to the Settings page to add and manage all your customization options like fonts, colors, sizes, usage types, and more.
+                Create one or more customizers that you can add to different locations on your store.
+              </s-paragraph>
+              <Link to="/app/customizers">
+                <s-button variant="primary">Manage Customizers</s-button>
+              </Link>
+            </s-stack>
+          </s-box>
+
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="base">
+              <s-heading level={3}>Step 2: Configure Options</s-heading>
+              <s-paragraph>
+                Add and manage all your customization options like fonts, colors, sizes, and more.
               </s-paragraph>
               <Link to="/app/settings">
                 <s-button variant="primary">Go to Settings</s-button>
@@ -99,21 +124,9 @@ export default function Index() {
 
           <s-box padding="base" borderWidth="base" borderRadius="base">
             <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 2: Install Embed Script</s-heading>
+              <s-heading level={3}>Step 3: Add to Your Theme</s-heading>
               <s-paragraph>
-                Get your unique embed script and installation instructions to add the customizer to your storefront.
-              </s-paragraph>
-              <Link to="/app/embed">
-                <s-button variant="primary">Get Embed Code</s-button>
-              </Link>
-            </s-stack>
-          </s-box>
-
-          <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 3: Test Your Customizer</s-heading>
-              <s-paragraph>
-                Once installed, visit your storefront and click the "Customize Signage" button on any product page to test the customizer.
+                Go to your theme editor, add the "Sign Customizer" app block, and enter your customizer ID. No manual code installation needed!
               </s-paragraph>
             </s-stack>
           </s-box>
@@ -122,7 +135,8 @@ export default function Index() {
 
       <s-section slot="aside" heading="Features">
         <s-unordered-list>
-          <s-list-item>Multi-store support</s-list-item>
+          <s-list-item>Multiple customizers with active/inactive states</s-list-item>
+          <s-list-item>Easy theme integration via app blocks</s-list-item>
           <s-list-item>Customizable fonts and colors</s-list-item>
           <s-list-item>Multiple size options</s-list-item>
           <s-list-item>Indoor/Outdoor usage types</s-list-item>

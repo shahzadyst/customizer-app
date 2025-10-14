@@ -1,0 +1,10 @@
+api_version = "2025-01"
+
+[[extensions]]
+type = "theme"
+name = "sign-customizer-block"
+
+[extensions.settings]
+  [[extensions.settings.blocks]]
+  type = "sign_customizer"
+  name = "Sign Customizer"

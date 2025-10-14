@@ -235,53 +235,71 @@ export default function Settings() {
     </s-stack>
   );
 
+  const tabStyle = {
+    padding: '12px 20px',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#6b7280',
+    borderBottom: '2px solid transparent',
+    transition: 'all 0.2s'
+  };
+
+  const activeTabStyle = {
+    ...tabStyle,
+    color: '#111827',
+    borderBottomColor: '#111827'
+  };
+
   return (
     <s-page heading="Signage Customizer Settings">
       <s-section>
-        <s-tabs>
-          <s-tab-button
-            selected={activeSection === "fonts"}
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '24px' }}>
+          <button
+            style={activeSection === "fonts" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("fonts")}
           >
             Fonts
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "colors"}
+          </button>
+          <button
+            style={activeSection === "colors" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("colors")}
           >
             Colors
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "sizes"}
+          </button>
+          <button
+            style={activeSection === "sizes" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("sizes")}
           >
             Sizes
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "usageTypes"}
+          </button>
+          <button
+            style={activeSection === "usageTypes" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("usageTypes")}
           >
             Usage Types
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "acrylicShapes"}
+          </button>
+          <button
+            style={activeSection === "acrylicShapes" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("acrylicShapes")}
           >
             Acrylic Shapes
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "backboardColors"}
+          </button>
+          <button
+            style={activeSection === "backboardColors" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("backboardColors")}
           >
             Backboard Colors
-          </s-tab-button>
-          <s-tab-button
-            selected={activeSection === "hangingOptions"}
+          </button>
+          <button
+            style={activeSection === "hangingOptions" ? activeTabStyle : tabStyle}
             onClick={() => setActiveSection("hangingOptions")}
           >
             Hanging Options
-          </s-tab-button>
-        </s-tabs>
+          </button>
+        </div>
       </s-section>
 
       {activeSection === "fonts" && (
