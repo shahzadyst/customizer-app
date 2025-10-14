@@ -1,238 +1,133 @@
-import { useEffect } from "react";
-import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { Link, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
+import { getStoreByDomain, createOrUpdateStore, getStoreOptions } from "../supabase.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
 
-  return null;
-};
+  let store = await getStoreByDomain(shopDomain);
+  if (!store) {
+    store = await createOrUpdateStore(shopDomain);
+  }
 
-export const action = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
-  const product = responseJson.data.productCreate.product;
-  const variantId = product.variants.edges[0].node.id;
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-  const variantResponseJson = await variantResponse.json();
+  const options = await getStoreOptions(store.id);
 
-  return {
-    product: responseJson.data.productCreate.product,
-    variant: variantResponseJson.data.productVariantsBulkUpdate.productVariants,
+  const stats = {
+    fonts: options.fonts.length,
+    colors: options.colors.length,
+    sizes: options.sizes.length,
+    usageTypes: options.usageTypes.length,
+    acrylicShapes: options.acrylicShapes.length,
+    backboardColors: options.backboardColors.length,
+    hangingOptions: options.hangingOptions.length,
   };
+
+  return { stats, shopDomain };
 };
 
 export default function Index() {
-  const fetcher = useFetcher();
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
+  const { stats, shopDomain } = useLoaderData();
 
-  useEffect(() => {
-    if (fetcher.data?.product?.id) {
-      shopify.toast.show("Product created");
-    }
-  }, [fetcher.data?.product?.id, shopify]);
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
+  const totalOptions = Object.values(stats).reduce((sum, count) => sum + count, 0);
 
   return (
-    <s-page heading="Shopify app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
-      </s-button>
-
-      <s-section heading="Congrats on creating a new Shopify app 🎉">
+    <s-page heading="Signage Customizer App">
+      <s-section heading="Welcome to Your Signage Customizer">
         <s-paragraph>
-          This embedded app template uses{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/tools/app-bridge"
-            target="_blank"
-          >
-            App Bridge
-          </s-link>{" "}
-          interface examples like an{" "}
-          <s-link href="/app/additional">additional page in the app nav</s-link>
-          , as well as an{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            Admin GraphQL
-          </s-link>{" "}
-          mutation demo, to provide a starting point for app development.
+          This app allows you to create a fully customizable signage experience for your customers.
+          Configure fonts, colors, sizes, and other options, then embed the customizer on your storefront.
         </s-paragraph>
       </s-section>
-      <s-section heading="Get started with products">
-        <s-paragraph>
-          Generate a product with GraphQL and get the JSON output for that
-          product. Learn more about the{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-            target="_blank"
-          >
-            productCreate
-          </s-link>{" "}
-          mutation in our API references.
-        </s-paragraph>
-        <s-stack direction="inline" gap="base">
-          <s-button
-            onClick={generateProduct}
-            {...(isLoading ? { loading: true } : {})}
-          >
-            Generate a product
-          </s-button>
-          {fetcher.data?.product && (
-            <s-button
-              onClick={() => {
-                shopify.intents.invoke?.("edit:shopify/Product", {
-                  value: fetcher.data?.product?.id,
-                });
-              }}
-              target="_blank"
-              variant="tertiary"
-            >
-              Edit product
-            </s-button>
+
+      <s-section heading="Quick Stats">
+        <s-stack direction="block" gap="large">
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="base">
+              <s-heading level={3}>Configuration Status</s-heading>
+              <s-stack direction="block" gap="tight">
+                <s-text>Total Options Configured: {totalOptions}</s-text>
+                <s-text>Fonts: {stats.fonts}</s-text>
+                <s-text>Colors: {stats.colors}</s-text>
+                <s-text>Sizes: {stats.sizes}</s-text>
+                <s-text>Usage Types: {stats.usageTypes}</s-text>
+                <s-text>Acrylic Shapes: {stats.acrylicShapes}</s-text>
+                <s-text>Backboard Colors: {stats.backboardColors}</s-text>
+                <s-text>Hanging Options: {stats.hangingOptions}</s-text>
+              </s-stack>
+            </s-stack>
+          </s-box>
+
+          {totalOptions === 0 && (
+            <s-banner tone="warning">
+              <s-stack direction="block" gap="tight">
+                <s-text weight="semibold">Getting Started</s-text>
+                <s-text>
+                  You haven't configured any options yet. Go to the Settings page to add fonts, colors, sizes, and other customization options.
+                </s-text>
+              </s-stack>
+            </s-banner>
           )}
         </s-stack>
-        {fetcher.data?.product && (
-          <s-section heading="productCreate mutation">
+      </s-section>
+
+      <s-section heading="Quick Start Guide">
+        <s-stack direction="block" gap="large">
+          <s-box padding="base" borderWidth="base" borderRadius="base">
             <s-stack direction="block" gap="base">
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.product, null, 2)}</code>
-                </pre>
-              </s-box>
-
-              <s-heading>productVariantsBulkUpdate mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre style={{ margin: 0 }}>
-                  <code>{JSON.stringify(fetcher.data.variant, null, 2)}</code>
-                </pre>
-              </s-box>
+              <s-heading level={3}>Step 1: Configure Options</s-heading>
+              <s-paragraph>
+                Go to the Settings page to add and manage all your customization options like fonts, colors, sizes, usage types, and more.
+              </s-paragraph>
+              <Link to="/app/settings">
+                <s-button variant="primary">Go to Settings</s-button>
+              </Link>
             </s-stack>
-          </s-section>
-        )}
+          </s-box>
+
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="base">
+              <s-heading level={3}>Step 2: Install Embed Script</s-heading>
+              <s-paragraph>
+                Get your unique embed script and installation instructions to add the customizer to your storefront.
+              </s-paragraph>
+              <Link to="/app/embed">
+                <s-button variant="primary">Get Embed Code</s-button>
+              </Link>
+            </s-stack>
+          </s-box>
+
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="base">
+              <s-heading level={3}>Step 3: Test Your Customizer</s-heading>
+              <s-paragraph>
+                Once installed, visit your storefront and click the "Customize Signage" button on any product page to test the customizer.
+              </s-paragraph>
+            </s-stack>
+          </s-box>
+        </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="App template specs">
-        <s-paragraph>
-          <s-text>Framework: </s-text>
-          <s-link href="https://reactrouter.com/" target="_blank">
-            React Router
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Interface: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/app-home/using-polaris-components"
-            target="_blank"
-          >
-            Polaris web components
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>API: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            GraphQL
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Database: </s-text>
-          <s-link href="https://www.prisma.io/" target="_blank">
-            Prisma
-          </s-link>
-        </s-paragraph>
-      </s-section>
-
-      <s-section slot="aside" heading="Next steps">
+      <s-section slot="aside" heading="Features">
         <s-unordered-list>
-          <s-list-item>
-            Build an{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/getting-started/build-app-example"
-              target="_blank"
-            >
-              example app
-            </s-link>
-          </s-list-item>
-          <s-list-item>
-            Explore Shopify&apos;s API with{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-              target="_blank"
-            >
-              GraphiQL
-            </s-link>
-          </s-list-item>
+          <s-list-item>Multi-store support</s-list-item>
+          <s-list-item>Customizable fonts and colors</s-list-item>
+          <s-list-item>Multiple size options</s-list-item>
+          <s-list-item>Indoor/Outdoor usage types</s-list-item>
+          <s-list-item>Various acrylic shapes</s-list-item>
+          <s-list-item>Backboard color selection</s-list-item>
+          <s-list-item>Hanging options</s-list-item>
+          <s-list-item>Real-time preview</s-list-item>
+          <s-list-item>Price modifiers</s-list-item>
         </s-unordered-list>
+      </s-section>
+
+      <s-section slot="aside" heading="Store Information">
+        <s-paragraph>
+          <s-text weight="semibold">Shop: </s-text>
+          <s-text>{shopDomain}</s-text>
+        </s-paragraph>
       </s-section>
     </s-page>
   );
