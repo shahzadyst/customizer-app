@@ -9,6 +9,11 @@ export async function getCustomizers(shop) {
 export async function getCustomizer(shop, customizerId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
+
+  if (!ObjectId.isValid(customizerId)) {
+    return null;
+  }
+
   const customizer = await db.collection(collections.customizers).findOne({
     _id: new ObjectId(customizerId),
     shop
@@ -32,6 +37,11 @@ export async function createCustomizer(shop, customizerData) {
 export async function updateCustomizer(shop, customizerId, customizerData) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
+
+  if (!ObjectId.isValid(customizerId)) {
+    throw new Error('Invalid customizer ID');
+  }
+
   const result = await db.collection(collections.customizers).updateOne(
     { _id: new ObjectId(customizerId), shop },
     { $set: { ...customizerData, updatedAt: new Date() } }
@@ -42,6 +52,11 @@ export async function updateCustomizer(shop, customizerId, customizerData) {
 export async function deleteCustomizer(shop, customizerId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
+
+  if (!ObjectId.isValid(customizerId)) {
+    throw new Error('Invalid customizer ID');
+  }
+
   const result = await db.collection(collections.customizers).deleteOne({
     _id: new ObjectId(customizerId),
     shop

@@ -192,9 +192,13 @@ export default function Index() {
           ) : (
             <s-stack direction="block" gap="base">
               {customizers.slice(0, 3).map((customizer) => {
-                const customizerId = customizer._id.toString();
+                const customizerId = customizer._id ? customizer._id.toString() : 'no-id';
                 return (
-                  <Link key={customizerId} to={`/app/customizers/${customizerId}`} style={{ textDecoration: 'none' }}>
+                  <Link
+                    key={customizerId}
+                    to={customizerId !== 'no-id' ? `/app/customizers/${customizerId}` : '#'}
+                    style={{ textDecoration: 'none' }}
+                  >
                     <s-box padding="base" borderWidth="base" borderRadius="base" style={{ cursor: 'pointer' }}>
                       <s-stack direction="inline" gap="base" alignment="space-between">
                         <s-stack direction="inline" gap="base" alignment="center">

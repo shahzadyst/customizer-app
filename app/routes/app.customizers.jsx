@@ -53,6 +53,7 @@ export const action = async ({ request }) => {
         return Response.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error) {
+    console.error('Action error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 };
@@ -80,7 +81,7 @@ export default function Customizers() {
               variant="primary"
               onClick={() => setShowCreateForm(!showCreateForm)}
             >
-              {showCreateForm ? 'Cancel' : 'Create new customizer'}
+              {showCreateForm ? 'Cancel' : 'Create new customiser'}
             </s-button>
           </div>
 
@@ -128,35 +129,39 @@ export default function Customizers() {
         {customizers.length === 0 ? (
           <s-banner tone="info">
             <s-text>
-              You haven't created any customizers yet. Click "Create new customizer" to get started.
+              You haven't created any customizers yet. Click "Create new customiser" to get started.
             </s-text>
           </s-banner>
         ) : (
           <s-stack direction="block" gap="base">
             {customizers.map((customizer) => {
-              const customizerId = customizer._id.toString();
+              const customizerId = customizer._id ? customizer._id.toString() : 'no-id';
+
               return (
                 <s-box
                   key={customizerId}
                   padding="base"
                   borderWidth="base"
                   borderRadius="base"
-                  style={{ cursor: 'pointer' }}
                 >
-                  <Link to={`/app/customizers/${customizerId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <s-stack direction="block" gap="base">
                     <s-stack direction="inline" gap="base" alignment="space-between">
-                      <s-stack direction="block" gap="tight">
+                      <Link
+                        to={customizerId !== 'no-id' ? `/app/customizers/${customizerId}` : '#'}
+                        style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
+                      >
                         <s-stack direction="inline" gap="base" alignment="center">
-                          <div style={{ 
-                            width: '40px', 
-                            height: '40px', 
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
                             background: '#7C3AED',
                             borderRadius: '8px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: 'white',
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            fontSize: '18px'
                           }}>
                             {customizer.name.charAt(0).toUpperCase()}
                           </div>
@@ -167,61 +172,63 @@ export default function Customizers() {
                             </s-text>
                           </s-stack>
                         </s-stack>
-                      </s-stack>
+                      </Link>
 
                       <s-stack direction="inline" gap="tight" alignment="center">
                         <s-badge tone={customizer.isActive ? "success" : "default"}>
                           {customizer.isActive ? "Active" : "Inactive"}
                         </s-badge>
-                        <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
+
+                        {customizerId !== 'no-id' && (
+                          <>
+                            <fetcher.Form method="post" style={{ display: 'inline' }}>
+                              <input type="hidden" name="action" value="updateStatus" />
+                              <input type="hidden" name="id" value={customizerId} />
+                              <input type="hidden" name="isActive" value={(!customizer.isActive).toString()} />
+                              <s-button
+                                size="small"
+                                variant="secondary"
+                                type="submit"
+                              >
+                                {customizer.isActive ? 'Deactivate' : 'Activate'}
+                              </s-button>
+                            </fetcher.Form>
+
+                            <fetcher.Form method="post" style={{ display: 'inline' }}>
+                              <input type="hidden" name="action" value="delete" />
+                              <input type="hidden" name="id" value={customizerId} />
+                              <s-button
+                                size="small"
+                                variant="destructive"
+                                type="submit"
+                              >
+                                Delete
+                              </s-button>
+                            </fetcher.Form>
+                          </>
+                        )}
                       </s-stack>
                     </s-stack>
-                  </Link>
 
-                  <s-divider style={{ margin: '16px 0' }} />
-
-                  <s-stack direction="inline" gap="tight" alignment="space-between">
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="updateStatus" />
-                      <input type="hidden" name="id" value={customizerId} />
-                      <input type="hidden" name="isActive" value={(!customizer.isActive).toString()} />
-                      <s-button
-                        size="small"
-                        variant="secondary"
-                        type="submit"
-                      >
-                        {customizer.isActive ? 'Deactivate' : 'Activate'}
-                      </s-button>
-                    </fetcher.Form>
-
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="delete" />
-                      <input type="hidden" name="id" value={customizerId} />
-                      <s-button
-                        size="small"
-                        variant="destructive"
-                        type="submit"
-                      >
-                        Delete
-                      </s-button>
-                    </fetcher.Form>
+                    {customizerId !== 'no-id' && (
+                      <>
+                        <s-divider />
+                        <s-banner tone="info">
+                          <s-stack direction="block" gap="tight">
+                            <s-text size="small" weight="semibold">
+                              To add this customizer to your theme:
+                            </s-text>
+                            <s-ordered-list>
+                              <s-list-item>Go to your theme editor</s-list-item>
+                              <s-list-item>Add the "Sign Customizer" app block</s-list-item>
+                              <s-list-item>Enter the customizer ID: <strong>{customizerId}</strong></s-list-item>
+                              <s-list-item>Save and publish your theme</s-list-item>
+                            </s-ordered-list>
+                          </s-stack>
+                        </s-banner>
+                      </>
+                    )}
                   </s-stack>
-
-                  <s-divider style={{ margin: '16px 0' }} />
-
-                  <s-banner tone="info">
-                    <s-stack direction="block" gap="tight">
-                      <s-text size="small" weight="semibold">
-                        To add this customizer to your theme:
-                      </s-text>
-                      <s-ordered-list>
-                        <s-list-item>Go to your theme editor</s-list-item>
-                        <s-list-item>Add the "Sign Customizer" app block</s-list-item>
-                        <s-list-item>Enter the customizer ID: {customizerId}</s-list-item>
-                        <s-list-item>Save and publish your theme</s-list-item>
-                      </s-ordered-list>
-                    </s-stack>
-                  </s-banner>
                 </s-box>
               );
             })}
