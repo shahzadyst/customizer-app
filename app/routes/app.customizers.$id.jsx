@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link, useNavigate, json } from "react-router";
+import { useLoaderData, useFetcher, Link, useNavigate } from "react-router";
+import { json } from "@react-router/node";
 import { authenticate } from "../shopify.server";
 import { getCustomizer } from "../models/customizer.server";
 import {
