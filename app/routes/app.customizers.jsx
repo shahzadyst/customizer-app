@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link } from "react-router";
+import { useLoaderData, useFetcher, Link, json } from "react-router";
 import { authenticate } from "../shopify.server";
 import {
   getCustomizers,
@@ -34,27 +34,27 @@ export const action = async ({ request }) => {
           description: formData.get("description") || "",
           isActive: formData.get("isActive") === "true",
         });
-        return Response.json({ success: true });
+        return json({ success: true });
       }
 
       case "updateStatus": {
         const customizerId = formData.get("id");
         const isActive = formData.get("isActive") === "true";
         await updateCustomizer(shop, customizerId, { isActive });
-        return Response.json({ success: true });
+        return json({ success: true });
       }
 
       case "delete": {
         await deleteCustomizer(shop, formData.get("id"));
-        return Response.json({ success: true });
+        return json({ success: true });
       }
 
       default:
-        return Response.json({ error: "Invalid action" }, { status: 400 });
+        return json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error) {
     console.error('Action error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return json({ error: error.message }, { status: 500 });
   }
 };
 
