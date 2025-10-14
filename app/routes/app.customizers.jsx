@@ -34,31 +34,31 @@ export const action = async ({ request }) => {
           description: formData.get("description") || "",
           isActive: formData.get("isActive") === "true",
         });
-        return { success: true };
+        return Response.json({ success: true });
       }
 
       case "updateStatus": {
         const customizerId = formData.get("id");
         const isActive = formData.get("isActive") === "true";
         await updateCustomizer(shop, customizerId, { isActive });
-        return { success: true };
+        return Response.json({ success: true });
       }
 
       case "delete": {
         await deleteCustomizer(shop, formData.get("id"));
-        return { success: true };
+        return Response.json({ success: true });
       }
 
       default:
-        return { error: "Invalid action" };
+        return Response.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error) {
-    return { error: error.message };
+    return Response.json({ error: error.message }, { status: 500 });
   }
 };
 
 export default function Customizers() {
-  const { shop, customizers } = useLoaderData();
+  const { customizers } = useLoaderData();
   const fetcher = useFetcher();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -69,18 +69,18 @@ export default function Customizers() {
   }, [fetcher.data]);
 
   return (
-    <s-page heading="Signage Customizers">
+    <s-page heading="Sign Customizers">
       <s-section>
         <s-stack direction="block" gap="large">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <s-paragraph>
-              Create and manage multiple signage customizers. Each customizer can be embedded in different locations on your store.
+              Create and manage multiple signage customizers. Each customizer can be added to your theme using app blocks.
             </s-paragraph>
             <s-button
               variant="primary"
               onClick={() => setShowCreateForm(!showCreateForm)}
             >
-              {showCreateForm ? 'Cancel' : 'Create Customizer'}
+              {showCreateForm ? 'Cancel' : 'Create new customizer'}
             </s-button>
           </div>
 
@@ -94,21 +94,26 @@ export default function Customizers() {
                     label="Customizer Name"
                     name="name"
                     required
-                    placeholder="e.g., Main Signage Customizer"
+                    placeholder="e.g., Neon Sign Customizer"
                   />
                   <s-text-field
                     label="Description (Optional)"
                     name="description"
                     multiline
                     rows={3}
-                    placeholder="Describe what this customizer is for..."
+                    placeholder="Simple Letter"
                   />
-                  <s-checkbox
-                    label="Active"
-                    name="isActive"
-                    value="true"
-                    defaultChecked
-                  />
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        value="true"
+                        defaultChecked
+                      />
+                      <span>Active</span>
+                    </label>
+                  </div>
                   <s-button type="submit" variant="primary">
                     Create Customizer
                   </s-button>
@@ -116,107 +121,112 @@ export default function Customizers() {
               </fetcher.Form>
             </s-box>
           )}
+        </s-stack>
+      </s-section>
 
-          <s-divider />
-
-          <s-heading level={2}>Your Customizers</s-heading>
-
-          {customizers.length === 0 ? (
-            <s-banner tone="info">
-              <s-text>
-                You haven't created any customizers yet. Click "Create Customizer" to get started.
-              </s-text>
-            </s-banner>
-          ) : (
-            <s-stack direction="block" gap="base">
-              {customizers.map((customizer) => (
+      <s-section heading="Recent customisers">
+        {customizers.length === 0 ? (
+          <s-banner tone="info">
+            <s-text>
+              You haven't created any customizers yet. Click "Create new customizer" to get started.
+            </s-text>
+          </s-banner>
+        ) : (
+          <s-stack direction="block" gap="base">
+            {customizers.map((customizer) => {
+              const customizerId = customizer._id.toString();
+              return (
                 <s-box
-                  key={customizer._id.toString()}
+                  key={customizerId}
                   padding="base"
                   borderWidth="base"
                   borderRadius="base"
+                  style={{ cursor: 'pointer' }}
                 >
-                  <s-stack direction="block" gap="base">
+                  <Link to={`/app/customizers/${customizerId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <s-stack direction="inline" gap="base" alignment="space-between">
                       <s-stack direction="block" gap="tight">
-                        <s-stack direction="inline" gap="tight" alignment="center">
-                          <s-heading level={3}>{customizer.name}</s-heading>
-                          <s-badge tone={customizer.isActive ? "success" : "warning"}>
-                            {customizer.isActive ? "Active" : "Inactive"}
-                          </s-badge>
+                        <s-stack direction="inline" gap="base" alignment="center">
+                          <div style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            background: '#7C3AED',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold'
+                          }}>
+                            {customizer.name.charAt(0).toUpperCase()}
+                          </div>
+                          <s-stack direction="block" gap="tight">
+                            <s-text weight="semibold" size="large">{customizer.name}</s-text>
+                            <s-text size="small" color="subdued">
+                              ID: {customizerId} - {customizer.description || 'No description'}
+                            </s-text>
+                          </s-stack>
                         </s-stack>
-                        {customizer.description && (
-                          <s-text color="subdued">{customizer.description}</s-text>
-                        )}
-                        <s-text size="small" color="subdued">
-                          ID: {customizer._id.toString()}
-                        </s-text>
-                        <s-text size="small" color="subdued">
-                          Created: {new Date(customizer.createdAt).toLocaleDateString()}
-                        </s-text>
                       </s-stack>
 
-                      <s-stack direction="inline" gap="tight">
-                        <fetcher.Form method="post">
-                          <input type="hidden" name="action" value="updateStatus" />
-                          <input type="hidden" name="id" value={customizer._id.toString()} />
-                          <input type="hidden" name="isActive" value={!customizer.isActive} />
-                          <s-button
-                            size="small"
-                            variant="secondary"
-                            type="submit"
-                          >
-                            {customizer.isActive ? 'Deactivate' : 'Activate'}
-                          </s-button>
-                        </fetcher.Form>
-
-                        <Link to={`/app/settings?customizerId=${customizer._id.toString()}`}>
-                          <s-button size="small" variant="primary">
-                            Configure
-                          </s-button>
-                        </Link>
-
-                        <fetcher.Form method="post">
-                          <input type="hidden" name="action" value="delete" />
-                          <input type="hidden" name="id" value={customizer._id.toString()} />
-                          <s-button
-                            size="small"
-                            variant="destructive"
-                            type="submit"
-                          >
-                            Delete
-                          </s-button>
-                        </fetcher.Form>
+                      <s-stack direction="inline" gap="tight" alignment="center">
+                        <s-badge tone={customizer.isActive ? "success" : "default"}>
+                          {customizer.isActive ? "Active" : "Inactive"}
+                        </s-badge>
+                        <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
                       </s-stack>
                     </s-stack>
+                  </Link>
 
-                    <s-divider />
+                  <s-divider style={{ margin: '16px 0' }} />
 
-                    <s-stack direction="block" gap="tight">
-                      <s-text weight="semibold">App Block Settings</s-text>
-                      <s-text size="small">
-                        Add this customizer to your theme using the app block. Use the customizer ID above in the theme editor.
-                      </s-text>
-                      <s-banner tone="info">
-                        <s-stack direction="block" gap="tight">
-                          <s-text size="small" weight="semibold">
-                            To add this customizer to your theme:
-                          </s-text>
-                          <s-ordered-list>
-                            <s-list-item>Go to your theme editor</s-list-item>
-                            <s-list-item>Add the "Sign Customizer" app block</s-list-item>
-                            <s-list-item>Enter the customizer ID: {customizer._id.toString()}</s-list-item>
-                            <s-list-item>Save and publish your theme</s-list-item>
-                          </s-ordered-list>
-                        </s-stack>
-                      </s-banner>
-                    </s-stack>
+                  <s-stack direction="inline" gap="tight" alignment="space-between">
+                    <fetcher.Form method="post" style={{ display: 'inline' }}>
+                      <input type="hidden" name="action" value="updateStatus" />
+                      <input type="hidden" name="id" value={customizerId} />
+                      <input type="hidden" name="isActive" value={(!customizer.isActive).toString()} />
+                      <s-button
+                        size="small"
+                        variant="secondary"
+                        type="submit"
+                      >
+                        {customizer.isActive ? 'Deactivate' : 'Activate'}
+                      </s-button>
+                    </fetcher.Form>
+
+                    <fetcher.Form method="post" style={{ display: 'inline' }}>
+                      <input type="hidden" name="action" value="delete" />
+                      <input type="hidden" name="id" value={customizerId} />
+                      <s-button
+                        size="small"
+                        variant="destructive"
+                        type="submit"
+                      >
+                        Delete
+                      </s-button>
+                    </fetcher.Form>
                   </s-stack>
+
+                  <s-divider style={{ margin: '16px 0' }} />
+
+                  <s-banner tone="info">
+                    <s-stack direction="block" gap="tight">
+                      <s-text size="small" weight="semibold">
+                        To add this customizer to your theme:
+                      </s-text>
+                      <s-ordered-list>
+                        <s-list-item>Go to your theme editor</s-list-item>
+                        <s-list-item>Add the "Sign Customizer" app block</s-list-item>
+                        <s-list-item>Enter the customizer ID: {customizerId}</s-list-item>
+                        <s-list-item>Save and publish your theme</s-list-item>
+                      </s-ordered-list>
+                    </s-stack>
+                  </s-banner>
                 </s-box>
-              ))}
-            </s-stack>
-          )}
-        </s-stack>
+              );
+            })}
+          </s-stack>
+        )}
       </s-section>
     </s-page>
   );

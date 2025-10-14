@@ -1,159 +1,314 @@
 import { Link, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import {
-  getFonts,
-  getColors,
-  getSizes,
-  getUsageTypes,
-  getAcrylicShapes,
-  getBackboardColors,
-  getHangingOptions,
-} from "../models/signage.server";
 import { getCustomizers } from "../models/customizer.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions, customizers] = await Promise.all([
-    getFonts(shopDomain),
-    getColors(shopDomain),
-    getSizes(shopDomain),
-    getUsageTypes(shopDomain),
-    getAcrylicShapes(shopDomain),
-    getBackboardColors(shopDomain),
-    getHangingOptions(shopDomain),
-    getCustomizers(shopDomain),
-  ]);
+  const customizers = await getCustomizers(shopDomain);
 
-  const stats = {
-    fonts: fonts.length,
-    colors: colors.length,
-    sizes: sizes.length,
-    usageTypes: usageTypes.length,
-    acrylicShapes: acrylicShapes.length,
-    backboardColors: backboardColors.length,
-    hangingOptions: hangingOptions.length,
-  };
-
-  return { stats, shopDomain, customizers };
+  return { shopDomain, customizers };
 };
 
 export default function Index() {
-  const { stats, shopDomain, customizers } = useLoaderData();
-
-  const totalOptions = Object.values(stats).reduce((sum, count) => sum + count, 0);
+  const { customizers } = useLoaderData();
+  const activeCustomizers = customizers.filter(c => c.isActive);
 
   return (
-    <s-page heading="Signage Customizer App">
-      <s-section heading="Welcome to Your Signage Customizer">
-        <s-paragraph>
-          Create fully customizable signage experiences for your customers with multiple customizers, each configurable independently.
-        </s-paragraph>
-      </s-section>
+    <s-page heading="Sign Customiser">
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px'
+      }}>
+        <span></span>
+        <Link to="/app/customizers">
+          <s-button variant="primary">Create new customiser</s-button>
+        </Link>
+      </div>
 
-      <s-section heading="Quick Stats">
-        <s-stack direction="block" gap="large">
+      <s-section heading="Activity Overview Last 30 Days">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '16px',
+          marginTop: '16px'
+        }}>
           <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="base">
-              <s-heading level={3}>Configuration Status</s-heading>
-              <s-stack direction="block" gap="tight">
-                <s-text>Active Customizers: {customizers.filter(c => c.isActive).length} of {customizers.length}</s-text>
-                <s-text>Total Options Configured: {totalOptions}</s-text>
-                <s-text>Fonts: {stats.fonts}</s-text>
-                <s-text>Colors: {stats.colors}</s-text>
-                <s-text>Sizes: {stats.sizes}</s-text>
-                <s-text>Usage Types: {stats.usageTypes}</s-text>
-                <s-text>Acrylic Shapes: {stats.acrylicShapes}</s-text>
-                <s-text>Backboard Colors: {stats.backboardColors}</s-text>
-                <s-text>Hanging Options: {stats.hangingOptions}</s-text>
-              </s-stack>
+            <s-stack direction="block" gap="tight">
+              <s-text size="small" color="subdued">Form Submissions</s-text>
+              <s-text size="large" weight="semibold">0</s-text>
             </s-stack>
           </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="tight">
+              <s-text size="small" color="subdued">AI Files Created</s-text>
+              <s-text size="large" weight="semibold">0</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="tight">
+              <s-text size="small" color="subdued">Products Created</s-text>
+              <s-text size="large" weight="semibold">0</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="tight">
+              <s-text size="small" color="subdued">Conversion Rate</s-text>
+              <s-text size="large" weight="semibold">0%</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base">
+            <s-stack direction="block" gap="tight">
+              <s-text size="small" color="subdued">Orders</s-text>
+              <s-text size="large" weight="semibold">0</s-text>
+            </s-stack>
+          </s-box>
+        </div>
+      </s-section>
 
-          {customizers.length === 0 && (
-            <s-banner tone="warning">
-              <s-stack direction="block" gap="tight">
-                <s-text weight="semibold">Getting Started</s-text>
-                <s-text>
-                  You haven't created any customizers yet. Create your first customizer to get started.
-                </s-text>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '24px',
+        marginTop: '24px'
+      }}>
+        <s-section heading="Main Menu">
+          <s-stack direction="block" gap="base">
+            <Link to="/app/customizers" style={{ textDecoration: 'none' }}>
+              <s-box padding="base" borderWidth="base" borderRadius="base" style={{ cursor: 'pointer' }}>
+                <s-stack direction="inline" gap="base" alignment="space-between">
+                  <s-stack direction="inline" gap="base" alignment="center">
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      background: '#f3f4f6',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px'
+                    }}>
+                      A
+                    </div>
+                    <s-stack direction="block" gap="tight">
+                      <s-text weight="semibold">Customisers</s-text>
+                      <s-text size="small" color="subdued">Manage your sign customisers for this store</s-text>
+                    </s-stack>
+                  </s-stack>
+                  <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
+                </s-stack>
+              </s-box>
+            </Link>
+
+            <s-box padding="base" borderWidth="base" borderRadius="base" style={{ opacity: 0.6 }}>
+              <s-stack direction="inline" gap="base" alignment="space-between">
+                <s-stack direction="inline" gap="base" alignment="center">
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: '#f3f4f6',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px'
+                  }}>
+                    📦
+                  </div>
+                  <s-stack direction="block" gap="tight">
+                    <s-text weight="semibold">Orders</s-text>
+                    <s-text size="small" color="subdued">View your store's attributed orders</s-text>
+                  </s-stack>
+                </s-stack>
+                <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
               </s-stack>
+            </s-box>
+
+            <s-box padding="base" borderWidth="base" borderRadius="base" style={{ opacity: 0.6 }}>
+              <s-stack direction="inline" gap="base" alignment="space-between">
+                <s-stack direction="inline" gap="base" alignment="center">
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: '#f3f4f6',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px'
+                  }}>
+                    📝
+                  </div>
+                  <s-stack direction="block" gap="tight">
+                    <s-text weight="semibold">Design Files & Form Submissions</s-text>
+                    <s-text size="small" color="subdued">View your store's AI design files, quote forms and custom design forms</s-text>
+                  </s-stack>
+                </s-stack>
+                <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
+              </s-stack>
+            </s-box>
+
+            <s-box padding="base" borderWidth="base" borderRadius="base" style={{ opacity: 0.6 }}>
+              <s-stack direction="inline" gap="base" alignment="space-between">
+                <s-stack direction="inline" gap="base" alignment="center">
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: '#f3f4f6',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px'
+                  }}>
+                    ⚙️
+                  </div>
+                  <s-stack direction="block" gap="tight">
+                    <s-text weight="semibold">Tools & Settings</s-text>
+                    <s-text size="small" color="subdued">Access additional tools, integrations, and configuration options</s-text>
+                  </s-stack>
+                </s-stack>
+                <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
+              </s-stack>
+            </s-box>
+          </s-stack>
+        </s-section>
+
+        <s-section>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <s-heading level={3}>Recent customisers</s-heading>
+            <Link to="/app/customizers" style={{ color: '#2563eb', textDecoration: 'none', fontSize: '14px' }}>
+              View all customisers
+            </Link>
+          </div>
+          {customizers.length === 0 ? (
+            <s-banner tone="info">
+              <s-text>No customizers created yet. Create your first customizer to get started.</s-text>
             </s-banner>
+          ) : (
+            <s-stack direction="block" gap="base">
+              {customizers.slice(0, 3).map((customizer) => {
+                const customizerId = customizer._id.toString();
+                return (
+                  <Link key={customizerId} to={`/app/customizers/${customizerId}`} style={{ textDecoration: 'none' }}>
+                    <s-box padding="base" borderWidth="base" borderRadius="base" style={{ cursor: 'pointer' }}>
+                      <s-stack direction="inline" gap="base" alignment="space-between">
+                        <s-stack direction="inline" gap="base" alignment="center">
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            background: '#7C3AED',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold'
+                          }}>
+                            {customizer.name.charAt(0).toUpperCase()}
+                          </div>
+                          <s-stack direction="block" gap="tight">
+                            <s-text weight="semibold">{customizer.name}</s-text>
+                            <s-text size="small" color="subdued">
+                              ID: {customizerId} - {customizer.description || 'Simple Letter'}
+                            </s-text>
+                          </s-stack>
+                        </s-stack>
+                        <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
+                      </s-stack>
+                    </s-box>
+                  </Link>
+                );
+              })}
+            </s-stack>
           )}
+        </s-section>
+      </div>
 
-          {totalOptions === 0 && customizers.length > 0 && (
-            <s-banner tone="warning">
-              <s-stack direction="block" gap="tight">
-                <s-text weight="semibold">Configure Options</s-text>
-                <s-text>
-                  You have customizers but no options configured. Go to Settings to add fonts, colors, sizes, and other options.
-                </s-text>
-              </s-stack>
-            </s-banner>
-          )}
-        </s-stack>
-      </s-section>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '16px',
+        marginTop: '24px'
+      }}>
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <div style={{ fontSize: '24px' }}>🎯</div>
+            <s-heading level={4}>Browse through our demos</s-heading>
+            <s-text size="small" color="subdued">Explore live examples of sign customisers in action</s-text>
+            <s-button variant="secondary" size="small">View Demos</s-button>
+          </s-stack>
+        </s-box>
 
-      <s-section heading="Quick Start Guide">
-        <s-stack direction="block" gap="large">
-          <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 1: Create a Customizer</s-heading>
-              <s-paragraph>
-                Create one or more customizers that you can add to different locations on your store.
-              </s-paragraph>
-              <Link to="/app/customizers">
-                <s-button variant="primary">Manage Customizers</s-button>
-              </Link>
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <div style={{ fontSize: '24px' }}>📚</div>
+            <s-heading level={4}>Learning Center</s-heading>
+            <s-text size="small" color="subdued">Learn more about the app and how to use it</s-text>
+            <s-button variant="secondary" size="small">Learn</s-button>
+          </s-stack>
+        </s-box>
+
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <div style={{ fontSize: '24px' }}>🏭</div>
+            <s-heading level={4}>Manufacturers</s-heading>
+            <s-text size="small" color="subdued">Find and work with manufacturers from all around the world</s-text>
+            <s-button variant="secondary" size="small">Browse</s-button>
+          </s-stack>
+        </s-box>
+
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <div style={{ fontSize: '24px' }}>💳</div>
+            <s-heading level={4}>Plans</s-heading>
+            <s-text size="small" color="subdued">Subscribe or change your current plan</s-text>
+            <s-button variant="secondary" size="small">View Plans</s-button>
+          </s-stack>
+        </s-box>
+
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <div style={{ fontSize: '24px' }}>📖</div>
+            <s-heading level={4}>Read the docs</s-heading>
+            <s-text size="small" color="subdued">Learn how to use Sign Customiser to its full potential</s-text>
+            <s-button variant="secondary" size="small">Get Help</s-button>
+          </s-stack>
+        </s-box>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '2fr 1fr',
+        gap: '24px',
+        marginTop: '24px'
+      }}>
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <s-heading level={4}>Share your feedback</s-heading>
+            <s-text size="small" color="subdued">How would you describe your experience using Sign Customiser?</s-text>
+            <s-stack direction="inline" gap="tight">
+              <s-button variant="secondary" size="small">👍 Good</s-button>
+              <s-button variant="secondary" size="small">👎 Bad</s-button>
             </s-stack>
-          </s-box>
+          </s-stack>
+        </s-box>
 
-          <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 2: Configure Options</s-heading>
-              <s-paragraph>
-                Add and manage all your customization options like fonts, colors, sizes, and more.
-              </s-paragraph>
-              <Link to="/app/settings">
-                <s-button variant="primary">Go to Settings</s-button>
-              </Link>
+        <s-box padding="base" borderWidth="base" borderRadius="base">
+          <s-stack direction="block" gap="base">
+            <s-heading level={4}>Get in touch</s-heading>
+            <s-stack direction="block" gap="tight">
+              <s-link href="#">Start a live chat</s-link>
+              <s-link href="#">Send us an email</s-link>
+              <s-link href="#">Visit the help center</s-link>
             </s-stack>
-          </s-box>
-
-          <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="base">
-              <s-heading level={3}>Step 3: Add to Your Theme</s-heading>
-              <s-paragraph>
-                Go to your theme editor, add the "Sign Customizer" app block, and enter your customizer ID. No manual code installation needed!
-              </s-paragraph>
-            </s-stack>
-          </s-box>
-        </s-stack>
-      </s-section>
-
-      <s-section slot="aside" heading="Features">
-        <s-unordered-list>
-          <s-list-item>Multiple customizers with active/inactive states</s-list-item>
-          <s-list-item>Easy theme integration via app blocks</s-list-item>
-          <s-list-item>Customizable fonts and colors</s-list-item>
-          <s-list-item>Multiple size options</s-list-item>
-          <s-list-item>Indoor/Outdoor usage types</s-list-item>
-          <s-list-item>Various acrylic shapes</s-list-item>
-          <s-list-item>Backboard color selection</s-list-item>
-          <s-list-item>Hanging options</s-list-item>
-          <s-list-item>Real-time preview</s-list-item>
-          <s-list-item>Price modifiers</s-list-item>
-        </s-unordered-list>
-      </s-section>
-
-      <s-section slot="aside" heading="Store Information">
-        <s-paragraph>
-          <s-text weight="semibold">Shop: </s-text>
-          <s-text>{shopDomain}</s-text>
-        </s-paragraph>
-      </s-section>
+          </s-stack>
+        </s-box>
+      </div>
     </s-page>
   );
 }
