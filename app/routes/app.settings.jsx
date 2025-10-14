@@ -1,22 +1,55 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
-import { getStoreByDomain, createOrUpdateStore, getStoreOptions } from "../supabase.server";
+import {
+  getFonts,
+  addFont,
+  deleteFont,
+  getColors,
+  addColor,
+  deleteColor,
+  getSizes,
+  addSize,
+  deleteSize,
+  getUsageTypes,
+  addUsageType,
+  deleteUsageType,
+  getAcrylicShapes,
+  addAcrylicShape,
+  deleteAcrylicShape,
+  getBackboardColors,
+  addBackboardColor,
+  deleteBackboardColor,
+  getHangingOptions,
+  addHangingOption,
+  deleteHangingOption,
+} from "../models/signage.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  let store = await getStoreByDomain(shopDomain);
-  if (!store) {
-    store = await createOrUpdateStore(shopDomain);
-  }
-
-  const options = await getStoreOptions(store.id);
+  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+    getFonts(shopDomain),
+    getColors(shopDomain),
+    getSizes(shopDomain),
+    getUsageTypes(shopDomain),
+    getAcrylicShapes(shopDomain),
+    getBackboardColors(shopDomain),
+    getHangingOptions(shopDomain),
+  ]);
 
   return {
-    store,
-    options,
+    shop: shopDomain,
+    options: {
+      fonts,
+      colors,
+      sizes,
+      usageTypes,
+      acrylicShapes,
+      backboardColors,
+      hangingOptions,
+    },
   };
 };
 
@@ -24,150 +57,121 @@ export const action = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();
   const action = formData.get("action");
-
-  const store = await getStoreByDomain(session.shop);
-
-  if (!store) {
-    return { error: "Store not found" };
-  }
-
-  const { supabase } = await import("../supabase.server");
+  const shop = session.shop;
 
   try {
     switch (action) {
       case "addFont": {
-        const { data, error } = await supabase
-          .from("fonts")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            font_family: formData.get("font_family"),
-            font_url: formData.get("font_url") || null,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addFont(shop, {
+          name: formData.get("name"),
+          fontFamily: formData.get("font_family"),
+          fontUrl: formData.get("font_url") || null,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addColor": {
-        const { data, error } = await supabase
-          .from("colors")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            hex_value: formData.get("hex_value"),
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addColor(shop, {
+          name: formData.get("name"),
+          hexValue: formData.get("hex_value"),
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addSize": {
-        const { data, error } = await supabase
-          .from("sizes")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            width: parseFloat(formData.get("width")) || null,
-            height: parseFloat(formData.get("height")) || null,
-            unit: formData.get("unit") || "inches",
-            price_modifier: parseFloat(formData.get("price_modifier")) || 0,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addSize(shop, {
+          name: formData.get("name"),
+          width: parseFloat(formData.get("width")) || null,
+          height: parseFloat(formData.get("height")) || null,
+          unit: formData.get("unit") || "inches",
+          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addUsageType": {
-        const { data, error } = await supabase
-          .from("usage_types")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            description: formData.get("description") || null,
-            price_modifier: parseFloat(formData.get("price_modifier")) || 0,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addUsageType(shop, {
+          name: formData.get("name"),
+          description: formData.get("description") || null,
+          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addAcrylicShape": {
-        const { data, error } = await supabase
-          .from("acrylic_shapes")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            description: formData.get("description") || null,
-            price_modifier: parseFloat(formData.get("price_modifier")) || 0,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addAcrylicShape(shop, {
+          name: formData.get("name"),
+          description: formData.get("description") || null,
+          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addBackboardColor": {
-        const { data, error } = await supabase
-          .from("backboard_colors")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            hex_value: formData.get("hex_value"),
-            price_modifier: parseFloat(formData.get("price_modifier")) || 0,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addBackboardColor(shop, {
+          name: formData.get("name"),
+          hexValue: formData.get("hex_value"),
+          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
       case "addHangingOption": {
-        const { data, error } = await supabase
-          .from("hanging_options")
-          .insert({
-            store_id: store.id,
-            name: formData.get("name"),
-            description: formData.get("description") || null,
-            price_modifier: parseFloat(formData.get("price_modifier")) || 0,
-            display_order: parseInt(formData.get("display_order")) || 0,
-          })
-          .select()
-          .single();
-
-        return error ? { error: error.message } : { success: true, data };
+        await addHangingOption(shop, {
+          name: formData.get("name"),
+          description: formData.get("description") || null,
+          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
+          displayOrder: parseInt(formData.get("display_order")) || 0,
+          isActive: true,
+        });
+        return { success: true };
       }
 
-      case "deleteItem": {
-        const table = formData.get("table");
-        const id = formData.get("id");
-
-        const { error } = await supabase.from(table).delete().eq("id", id);
-
-        return error ? { error: error.message } : { success: true };
+      case "deleteFont": {
+        await deleteFont(shop, formData.get("id"));
+        return { success: true };
       }
 
-      case "toggleActive": {
-        const table = formData.get("table");
-        const id = formData.get("id");
-        const isActive = formData.get("is_active") === "true";
+      case "deleteColor": {
+        await deleteColor(shop, formData.get("id"));
+        return { success: true };
+      }
 
-        const { error } = await supabase
-          .from(table)
-          .update({ is_active: !isActive })
-          .eq("id", id);
+      case "deleteSize": {
+        await deleteSize(shop, formData.get("id"));
+        return { success: true };
+      }
 
-        return error ? { error: error.message } : { success: true };
+      case "deleteUsageType": {
+        await deleteUsageType(shop, formData.get("id"));
+        return { success: true };
+      }
+
+      case "deleteAcrylicShape": {
+        await deleteAcrylicShape(shop, formData.get("id"));
+        return { success: true };
+      }
+
+      case "deleteBackboardColor": {
+        await deleteBackboardColor(shop, formData.get("id"));
+        return { success: true };
+      }
+
+      case "deleteHangingOption": {
+        await deleteHangingOption(shop, formData.get("id"));
+        return { success: true };
       }
 
       default:
@@ -179,7 +183,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { store, options } = useLoaderData();
+  const { shop, options } = useLoaderData();
   const fetcher = useFetcher();
   const [activeSection, setActiveSection] = useState("fonts");
 
@@ -189,11 +193,14 @@ export default function Settings() {
     }
   }, [fetcher.data]);
 
-  const renderItemsList = (items, table, fields) => (
+  const renderItemsList = (items, actionPrefix, fields) => (
     <s-stack direction="block" gap="base">
+      {items.length === 0 && (
+        <s-text color="subdued">No items added yet</s-text>
+      )}
       {items.map((item) => (
         <s-box
-          key={item.id}
+          key={item._id.toString()}
           padding="base"
           borderWidth="base"
           borderRadius="base"
@@ -202,31 +209,17 @@ export default function Settings() {
             <s-stack direction="block" gap="tight">
               <s-text weight="semibold">{item.name}</s-text>
               {fields.map((field) => (
-                item[field] && (
+                item[field] !== undefined && item[field] !== null && (
                   <s-text key={field} size="small" color="subdued">
-                    {field}: {item[field]}
+                    {field}: {item[field].toString()}
                   </s-text>
                 )
               ))}
             </s-stack>
             <s-stack direction="inline" gap="tight">
               <fetcher.Form method="post">
-                <input type="hidden" name="action" value="toggleActive" />
-                <input type="hidden" name="table" value={table} />
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="is_active" value={item.is_active} />
-                <s-button
-                  size="small"
-                  variant="secondary"
-                  type="submit"
-                >
-                  {item.is_active ? "Deactivate" : "Activate"}
-                </s-button>
-              </fetcher.Form>
-              <fetcher.Form method="post">
-                <input type="hidden" name="action" value="deleteItem" />
-                <input type="hidden" name="table" value={table} />
-                <input type="hidden" name="id" value={item.id} />
+                <input type="hidden" name="action" value={`delete${actionPrefix}`} />
+                <input type="hidden" name="id" value={item._id.toString()} />
                 <s-button
                   size="small"
                   variant="destructive"
@@ -329,7 +322,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Fonts</s-heading>
-            {renderItemsList(options.fonts, "fonts", ["font_family"])}
+            {renderItemsList(options.fonts, "Font", ["fontFamily"])}
           </s-stack>
         </s-section>
       )}
@@ -367,7 +360,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Colors</s-heading>
-            {renderItemsList(options.colors, "colors", ["hex_value"])}
+            {renderItemsList(options.colors, "Color", ["hexValue"])}
           </s-stack>
         </s-section>
       )}
@@ -426,7 +419,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Sizes</s-heading>
-            {renderItemsList(options.sizes, "sizes", ["width", "height", "unit", "price_modifier"])}
+            {renderItemsList(options.sizes, "Size", ["width", "height", "unit", "priceModifier"])}
           </s-stack>
         </s-section>
       )}
@@ -471,7 +464,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Usage Types</s-heading>
-            {renderItemsList(options.usageTypes, "usage_types", ["description", "price_modifier"])}
+            {renderItemsList(options.usageTypes, "UsageType", ["description", "priceModifier"])}
           </s-stack>
         </s-section>
       )}
@@ -516,7 +509,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Acrylic Shapes</s-heading>
-            {renderItemsList(options.acrylicShapes, "acrylic_shapes", ["description", "price_modifier"])}
+            {renderItemsList(options.acrylicShapes, "AcrylicShape", ["description", "priceModifier"])}
           </s-stack>
         </s-section>
       )}
@@ -561,7 +554,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Backboard Colors</s-heading>
-            {renderItemsList(options.backboardColors, "backboard_colors", ["hex_value", "price_modifier"])}
+            {renderItemsList(options.backboardColors, "BackboardColor", ["hexValue", "priceModifier"])}
           </s-stack>
         </s-section>
       )}
@@ -606,7 +599,7 @@ export default function Settings() {
             <s-divider />
 
             <s-heading level={3}>Available Hanging Options</s-heading>
-            {renderItemsList(options.hangingOptions, "hanging_options", ["description", "price_modifier"])}
+            {renderItemsList(options.hangingOptions, "HangingOption", ["description", "priceModifier"])}
           </s-stack>
         </s-section>
       )}

@@ -153,16 +153,16 @@ export const loader = async ({ params, request }) => {
           \`;
 
           let displayContent = item.name;
-          if (item.hex_value) {
+          if (item.hexValue) {
             displayContent = \`
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 24px; height: 24px; border-radius: 4px; background: \${item.hex_value}; border: 1px solid #ddd;"></div>
+                <div style="width: 24px; height: 24px; border-radius: 4px; background: \${item.hexValue}; border: 1px solid #ddd;"></div>
                 <span>\${item.name}</span>
               </div>
             \`;
           }
-          if (item.price_modifier && item.price_modifier > 0) {
-            displayContent += \` <span style="color: #666; font-size: 12px;">(+$\${item.price_modifier})</span>\`;
+          if (item.priceModifier && item.priceModifier > 0) {
+            displayContent += \` <span style="color: #666; font-size: 12px;">(+$\${item.priceModifier})</span>\`;
           }
 
           option.innerHTML = displayContent;
@@ -198,13 +198,13 @@ export const loader = async ({ params, request }) => {
       previewText.textContent = currentSelection.customText || 'Your Text Here';
 
       if (currentSelection.font) {
-        previewText.style.fontFamily = currentSelection.font.font_family;
+        previewText.style.fontFamily = currentSelection.font.fontFamily;
       }
       if (currentSelection.color) {
-        previewText.style.color = currentSelection.color.hex_value;
+        previewText.style.color = currentSelection.color.hexValue;
       }
       if (currentSelection.backboardColor) {
-        previewText.parentElement.style.background = currentSelection.backboardColor.hex_value;
+        previewText.parentElement.style.background = currentSelection.backboardColor.hexValue;
       }
     }
 
@@ -222,8 +222,8 @@ export const loader = async ({ params, request }) => {
   function calculateTotalPrice() {
     let total = 0;
     Object.values(currentSelection).forEach(item => {
-      if (item && item.price_modifier) {
-        total += parseFloat(item.price_modifier);
+      if (item && item.priceModifier) {
+        total += parseFloat(item.priceModifier);
       }
     });
     return total;

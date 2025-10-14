@@ -1,5 +1,13 @@
 import { json } from "react-router";
-import { getStoreByDomain, getStoreOptions } from "../supabase.server";
+import {
+  getFonts,
+  getColors,
+  getSizes,
+  getUsageTypes,
+  getAcrylicShapes,
+  getBackboardColors,
+  getHangingOptions,
+} from "../models/signage.server";
 
 export const loader = async ({ params }) => {
   const { shop } = params;
@@ -9,17 +17,27 @@ export const loader = async ({ params }) => {
   }
 
   try {
-    const store = await getStoreByDomain(shop);
-
-    if (!store) {
-      return json({ error: "Store not found" }, { status: 404 });
-    }
-
-    const options = await getStoreOptions(store.id);
+    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+      getFonts(shop),
+      getColors(shop),
+      getSizes(shop),
+      getUsageTypes(shop),
+      getAcrylicShapes(shop),
+      getBackboardColors(shop),
+      getHangingOptions(shop),
+    ]);
 
     return json({
       success: true,
-      config: options,
+      config: {
+        fonts: fonts.filter(f => f.isActive !== false),
+        colors: colors.filter(c => c.isActive !== false),
+        sizes: sizes.filter(s => s.isActive !== false),
+        usageTypes: usageTypes.filter(u => u.isActive !== false),
+        acrylicShapes: acrylicShapes.filter(a => a.isActive !== false),
+        backboardColors: backboardColors.filter(b => b.isActive !== false),
+        hangingOptions: hangingOptions.filter(h => h.isActive !== false),
+      },
     }, {
       headers: {
         "Access-Control-Allow-Origin": "*",

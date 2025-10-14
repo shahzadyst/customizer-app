@@ -1,27 +1,38 @@
 import { Link, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { getStoreByDomain, createOrUpdateStore, getStoreOptions } from "../supabase.server";
+import {
+  getFonts,
+  getColors,
+  getSizes,
+  getUsageTypes,
+  getAcrylicShapes,
+  getBackboardColors,
+  getHangingOptions,
+} from "../models/signage.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  let store = await getStoreByDomain(shopDomain);
-  if (!store) {
-    store = await createOrUpdateStore(shopDomain);
-  }
-
-  const options = await getStoreOptions(store.id);
+  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+    getFonts(shopDomain),
+    getColors(shopDomain),
+    getSizes(shopDomain),
+    getUsageTypes(shopDomain),
+    getAcrylicShapes(shopDomain),
+    getBackboardColors(shopDomain),
+    getHangingOptions(shopDomain),
+  ]);
 
   const stats = {
-    fonts: options.fonts.length,
-    colors: options.colors.length,
-    sizes: options.sizes.length,
-    usageTypes: options.usageTypes.length,
-    acrylicShapes: options.acrylicShapes.length,
-    backboardColors: options.backboardColors.length,
-    hangingOptions: options.hangingOptions.length,
+    fonts: fonts.length,
+    colors: colors.length,
+    sizes: sizes.length,
+    usageTypes: usageTypes.length,
+    acrylicShapes: acrylicShapes.length,
+    backboardColors: backboardColors.length,
+    hangingOptions: hangingOptions.length,
   };
 
   return { stats, shopDomain };

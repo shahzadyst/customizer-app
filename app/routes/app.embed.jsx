@@ -1,15 +1,9 @@
 import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
-import { getStoreByDomain, createOrUpdateStore } from "../supabase.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
-
-  let store = await getStoreByDomain(shopDomain);
-  if (!store) {
-    store = await createOrUpdateStore(shopDomain);
-  }
 
   const appUrl = process.env.SHOPIFY_APP_URL || "";
   const embedUrl = `${appUrl}/embed/${shopDomain}`;
