@@ -1,4 +1,3 @@
-import { json } from "react-router";
 import {
   getFonts,
   getColors,
@@ -13,7 +12,7 @@ export const loader = async ({ params }) => {
   const { shop } = params;
 
   if (!shop) {
-    return json({ error: "Shop parameter is required" }, { status: 400 });
+    return Response.json({ error: "Shop parameter is required" }, { status: 400 });
   }
 
   try {
@@ -27,7 +26,7 @@ export const loader = async ({ params }) => {
       getHangingOptions(shop),
     ]);
 
-    return json({
+    return Response.json({
       success: true,
       config: {
         fonts: fonts.filter(f => f.isActive !== false),
@@ -46,7 +45,7 @@ export const loader = async ({ params }) => {
       }
     });
   } catch (error) {
-    return json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 };
 
