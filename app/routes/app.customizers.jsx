@@ -153,7 +153,8 @@ export default function Customizers() {
                     <s-stack direction="inline" gap="base" alignment="space-between">
                       <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => {
                         if (dbId) {
-                          navigate(`/app/customizers/${dbId}`);
+                          console.log("Navigating to:", `/app/setting-customizers/${dbId}`);
+                          navigate(`/app/setting-customizers/${dbId}`);
                         }
                       }}>
                         <s-stack direction="inline" gap="base" alignment="center">
@@ -194,10 +195,13 @@ export default function Customizers() {
                             {showInstructions[customizerId] ? 'Hide' : 'View'} Setup
                           </s-button>
                         )}
-
+                        {
+                          console.log("Navigating to:", `/app/setting-customizers/${dbId}`)
+                        }
                         {dbId && (
                           <>
-                            <Link to={`/app/customizers/${dbId}`}>
+                          
+                            <Link to={`/app/setting-customizers/${dbId}`}>
                               <s-button
                                 size="small"
                                 variant="primary"

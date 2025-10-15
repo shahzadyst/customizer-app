@@ -203,7 +203,7 @@ export default function Index() {
                     key={dbId || customizerId}
                     onClick={() => {
                       if (dbId) {
-                        navigate(`/app/customizers/${dbId}`);
+                        navigate(`/app/setting-customizers/${dbId}`);
                       }
                     }}
                     style={{ textDecoration: 'none', cursor: 'pointer' }}

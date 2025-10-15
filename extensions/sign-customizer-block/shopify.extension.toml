@@ -1,8 +1,10 @@
 api_version = "2025-01"
 
 [[extensions]]
+uid = "fb9212c0-06e1-1c6d-b255-6518bce91deb1cfe87b4"
 type = "theme"
 name = "sign-customizer-block"
+handle = "sign-customizer-block"
 
 [extensions.settings]
   [[extensions.settings.blocks]]
