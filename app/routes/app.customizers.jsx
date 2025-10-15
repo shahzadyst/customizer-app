@@ -62,10 +62,11 @@ export default function Customizers() {
   const { customizers } = useLoaderData();
   const fetcher = useFetcher();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showInstructions, setShowInstructions] = useState({});
 
   useEffect(() => {
     if (fetcher.data?.success) {
-      window.location.reload();
+      setShowCreateForm(false);
     }
   }, [fetcher.data]);
 
@@ -180,6 +181,16 @@ export default function Customizers() {
                           {customizer.isActive ? "Active" : "Inactive"}
                         </s-badge>
 
+                        {customizerId && customizerId !== 'no-id' && (
+                          <s-button
+                            size="small"
+                            variant="secondary"
+                            onClick={() => setShowInstructions(prev => ({ ...prev, [customizerId]: !prev[customizerId] }))}
+                          >
+                            {showInstructions[customizerId] ? 'Hide' : 'View'} Setup
+                          </s-button>
+                        )}
+
                         {dbId && (
                           <>
                             <fetcher.Form method="post" style={{ display: 'inline' }}>
@@ -211,7 +222,7 @@ export default function Customizers() {
                       </s-stack>
                     </s-stack>
 
-                    {customizerId && customizerId !== 'no-id' && (
+                    {customizerId && customizerId !== 'no-id' && showInstructions[customizerId] && (
                       <>
                         <s-divider />
                         <s-banner tone="info">

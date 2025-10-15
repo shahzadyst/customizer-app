@@ -31,20 +31,23 @@ export const loader = async ({ request, params }) => {
   const shopDomain = session.shop;
   const { id } = params;
 
-  const [customizer, fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
-    getCustomizer(shopDomain, id),
-    getFonts(shopDomain),
-    getColors(shopDomain),
-    getSizes(shopDomain),
-    getUsageTypes(shopDomain),
-    getAcrylicShapes(shopDomain),
-    getBackboardColors(shopDomain),
-    getHangingOptions(shopDomain),
-  ]);
+  const customizer = await getCustomizer(shopDomain, id);
 
   if (!customizer) {
     throw new Response("Customizer not found", { status: 404 });
   }
+
+  const customizerId = customizer.customizerId || id;
+
+  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+    getFonts(shopDomain, customizerId),
+    getColors(shopDomain, customizerId),
+    getSizes(shopDomain, customizerId),
+    getUsageTypes(shopDomain, customizerId),
+    getAcrylicShapes(shopDomain, customizerId),
+    getBackboardColors(shopDomain, customizerId),
+    getHangingOptions(shopDomain, customizerId),
+  ]);
 
   return {
     shop: shopDomain,
@@ -66,6 +69,7 @@ export const action = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get("action");
   const shop = session.shop;
+  const customizerId = params.id;
 
   try {
     switch (action) {
@@ -76,7 +80,7 @@ export const action = async ({ request, params }) => {
           fontUrl: formData.get("font_url") || null,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -86,7 +90,7 @@ export const action = async ({ request, params }) => {
           hexValue: formData.get("hex_value"),
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -99,7 +103,7 @@ export const action = async ({ request, params }) => {
           priceModifier: parseFloat(formData.get("price_modifier")) || 0,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -110,7 +114,7 @@ export const action = async ({ request, params }) => {
           priceModifier: parseFloat(formData.get("price_modifier")) || 0,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -121,7 +125,7 @@ export const action = async ({ request, params }) => {
           priceModifier: parseFloat(formData.get("price_modifier")) || 0,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -132,7 +136,7 @@ export const action = async ({ request, params }) => {
           priceModifier: parseFloat(formData.get("price_modifier")) || 0,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -143,7 +147,7 @@ export const action = async ({ request, params }) => {
           priceModifier: parseFloat(formData.get("price_modifier")) || 0,
           displayOrder: parseInt(formData.get("display_order")) || 0,
           isActive: true,
-        });
+        }, customizerId);
         return { success: true };
       }
 
@@ -266,17 +270,11 @@ export default function CustomizerSettings() {
     <s-page heading={`Configure: ${customizer.name}`}>
       <s-section>
         <s-stack direction="block" gap="base">
-          <s-stack direction="inline" gap="base" alignment="space-between">
-            <s-stack direction="block" gap="tight">
-              <s-text weight="semibold">Customizer ID: {customizer._id.toString()}</s-text>
-              <s-text color="subdued">{customizer.description}</s-text>
-            </s-stack>
+          <s-stack direction="inline" gap="base" alignment="flex-end">
             <Link to="/app/customizers">
               <s-button variant="secondary">Back to Customizers</s-button>
             </Link>
           </s-stack>
-
-          <s-divider />
 
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '24px' }}>
             <button

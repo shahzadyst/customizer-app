@@ -16,16 +16,20 @@ export async function upsertShopConfiguration(shop, configData) {
   return result;
 }
 
-export async function getFonts(shop) {
+export async function getFonts(shop, customizerId = null) {
   const db = await getDb();
-  const fonts = await db.collection(collections.fonts).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const fonts = await db.collection(collections.fonts).find(query).toArray();
   return fonts;
 }
 
-export async function addFont(shop, fontData) {
+export async function addFont(shop, fontData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.fonts).insertOne({
     shop,
+    customizerId,
     ...fontData,
     createdAt: new Date(),
   });
@@ -42,16 +46,20 @@ export async function deleteFont(shop, fontId) {
   return result;
 }
 
-export async function getColors(shop) {
+export async function getColors(shop, customizerId = null) {
   const db = await getDb();
-  const colors = await db.collection(collections.colors).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const colors = await db.collection(collections.colors).find(query).toArray();
   return colors;
 }
 
-export async function addColor(shop, colorData) {
+export async function addColor(shop, colorData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.colors).insertOne({
     shop,
+    customizerId,
     ...colorData,
     createdAt: new Date(),
   });
@@ -68,16 +76,20 @@ export async function deleteColor(shop, colorId) {
   return result;
 }
 
-export async function getSizes(shop) {
+export async function getSizes(shop, customizerId = null) {
   const db = await getDb();
-  const sizes = await db.collection(collections.sizes).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const sizes = await db.collection(collections.sizes).find(query).toArray();
   return sizes;
 }
 
-export async function addSize(shop, sizeData) {
+export async function addSize(shop, sizeData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.sizes).insertOne({
     shop,
+    customizerId,
     ...sizeData,
     createdAt: new Date(),
   });
@@ -94,16 +106,20 @@ export async function deleteSize(shop, sizeId) {
   return result;
 }
 
-export async function getUsageTypes(shop) {
+export async function getUsageTypes(shop, customizerId = null) {
   const db = await getDb();
-  const types = await db.collection(collections.usageTypes).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const types = await db.collection(collections.usageTypes).find(query).toArray();
   return types;
 }
 
-export async function addUsageType(shop, typeData) {
+export async function addUsageType(shop, typeData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.usageTypes).insertOne({
     shop,
+    customizerId,
     ...typeData,
     createdAt: new Date(),
   });
@@ -120,16 +136,20 @@ export async function deleteUsageType(shop, typeId) {
   return result;
 }
 
-export async function getAcrylicShapes(shop) {
+export async function getAcrylicShapes(shop, customizerId = null) {
   const db = await getDb();
-  const shapes = await db.collection(collections.acrylicShapes).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const shapes = await db.collection(collections.acrylicShapes).find(query).toArray();
   return shapes;
 }
 
-export async function addAcrylicShape(shop, shapeData) {
+export async function addAcrylicShape(shop, shapeData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.acrylicShapes).insertOne({
     shop,
+    customizerId,
     ...shapeData,
     createdAt: new Date(),
   });
@@ -146,16 +166,20 @@ export async function deleteAcrylicShape(shop, shapeId) {
   return result;
 }
 
-export async function getBackboardColors(shop) {
+export async function getBackboardColors(shop, customizerId = null) {
   const db = await getDb();
-  const colors = await db.collection(collections.backboardColors).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const colors = await db.collection(collections.backboardColors).find(query).toArray();
   return colors;
 }
 
-export async function addBackboardColor(shop, colorData) {
+export async function addBackboardColor(shop, colorData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.backboardColors).insertOne({
     shop,
+    customizerId,
     ...colorData,
     createdAt: new Date(),
   });
@@ -172,16 +196,20 @@ export async function deleteBackboardColor(shop, colorId) {
   return result;
 }
 
-export async function getHangingOptions(shop) {
+export async function getHangingOptions(shop, customizerId = null) {
   const db = await getDb();
-  const options = await db.collection(collections.hangingOptions).find({ shop }).toArray();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const options = await db.collection(collections.hangingOptions).find(query).toArray();
   return options;
 }
 
-export async function addHangingOption(shop, optionData) {
+export async function addHangingOption(shop, optionData, customizerId = null) {
   const db = await getDb();
   const result = await db.collection(collections.hangingOptions).insertOne({
     shop,
+    customizerId,
     ...optionData,
     createdAt: new Date(),
   });

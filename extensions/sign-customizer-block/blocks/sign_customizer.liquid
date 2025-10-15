@@ -8,49 +8,20 @@
       "id": "customizer_id",
       "label": "Sign Customizer ID",
       "info": "Enter the ID of the sign customizer to display from your app. Find this in the Customizers page of the app."
-    },
-    {
-      "type": "checkbox",
-      "id": "use_iframe",
-      "label": "Use iframe (experimental)",
-      "info": "Render your customizer in an iframe instead of embedding directly on your shop page.",
-      "default": false
-    },
-    {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button Text",
-      "default": "Customize Signage"
-    },
-    {
-      "type": "select",
-      "id": "button_style",
-      "label": "Button Style",
-      "options": [
-        {
-          "value": "primary",
-          "label": "Primary"
-        },
-        {
-          "value": "secondary",
-          "label": "Secondary"
-        }
-      ],
-      "default": "primary"
     }
   ]
 }
 {% endschema %}
 
 {% if block.settings.customizer_id != blank %}
-  <div class="sign-customizer-container" data-customizer-id="{{ block.settings.customizer_id }}">
-    <button
-      class="signage-customizer-btn sign-customizer-button--{{ block.settings.button_style }}"
-      data-customizer-id="{{ block.settings.customizer_id }}"
-      data-product-id="{{ product.id }}"
-    >
-      {{ block.settings.button_text }}
-    </button>
+  <div
+    class="sign-customizer-fullscreen"
+    data-customizer-id="{{ block.settings.customizer_id }}"
+    id="sign-customizer-{{ block.settings.customizer_id }}"
+  >
+    <div class="sign-customizer-content">
+      <p>Loading customizer...</p>
+    </div>
   </div>
 
   <script>
@@ -69,41 +40,36 @@
   </script>
 
   <style>
-    .sign-customizer-container {
-      margin: 1rem 0;
+    .sign-customizer-fullscreen {
+      width: 100%;
+      min-height: 100vh;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      position: relative;
+      overflow: auto;
     }
 
-    .sign-customizer-button--primary {
-      background-color: #000;
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: opacity 0.2s;
+    .sign-customizer-content {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      box-sizing: border-box;
     }
 
-    .sign-customizer-button--primary:hover {
-      opacity: 0.9;
+    .sign-customizer-fullscreen p {
+      text-align: center;
+      font-size: 18px;
+      color: #666;
     }
 
-    .sign-customizer-button--secondary {
-      background-color: transparent;
-      color: #000;
-      border: 2px solid #000;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .sign-customizer-button--secondary:hover {
-      background-color: #000;
-      color: #fff;
+    @media (max-width: 768px) {
+      .sign-customizer-content {
+        padding: 1rem;
+      }
     }
   </style>
 {% else %}
