@@ -197,7 +197,7 @@ export default function Customizers() {
 
                         {dbId && (
                           <>
-                            <Link to={`/app/customizers/${dbId}`}>
+                            <Link to={`/app/customizer/${dbId}`}>
                               <s-button
                                 size="small"
                                 variant="primary"
