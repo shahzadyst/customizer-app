@@ -30,6 +30,7 @@ import {
 import FontSettings from "../components/settings/FontSettings";
 import ColorSettings from "../components/settings/ColorSettings";
 import SizeSettings from "../components/settings/SizeSettings";
+import PricingSettings from "../components/settings/PricingSettings";
 import UsageTypeSettings from "../components/settings/UsageTypeSettings";
 import AcrylicShapeSettings from "../components/settings/AcrylicShapeSettings";
 import BackboardColorSettings from "../components/settings/BackboardColorSettings";
@@ -216,6 +217,7 @@ export default function CustomizerSettings() {
     { id: "fonts", label: "Fonts", icon: "📝" },
     { id: "colors", label: "Colors", icon: "🎨" },
     { id: "sizes", label: "Sizes", icon: "📏" },
+    { id: "pricing", label: "Pricing", icon: "💰" },
     { id: "usageTypes", label: "Usage Types", icon: "🏷️" },
     { id: "acrylicShapes", label: "Acrylic Shapes", icon: "⬡" },
     { id: "backboardColors", label: "Backboard Colors", icon: "🎨" },
@@ -234,6 +236,8 @@ export default function CustomizerSettings() {
         return <ColorSettings colors={options.colors} />;
       case "sizes":
         return <SizeSettings sizes={options.sizes} />;
+      case "pricing":
+        return <PricingSettings pricings={pricings} customizerId={customizer.customizerId} />;
       case "usageTypes":
         return <UsageTypeSettings usageTypes={options.usageTypes} />;
       case "acrylicShapes":
@@ -309,7 +313,7 @@ export default function CustomizerSettings() {
             <s-text size="small" weight="semibold" color="subdued" style={{ display: 'block', marginBottom: '8px' }}>
               CORE SETUP
             </s-text>
-            {filteredSections.slice(0, 3).map((section) => (
+            {filteredSections.slice(0, 4).map((section) => (
               <div
                 key={section.id}
                 onClick={() => setSearchParams({ section: section.id })}
@@ -337,7 +341,7 @@ export default function CustomizerSettings() {
             <s-text size="small" weight="semibold" color="subdued" style={{ display: 'block', marginBottom: '8px' }}>
               SIGN COMPONENTS
             </s-text>
-            {filteredSections.slice(3).map((section) => (
+            {filteredSections.slice(4).map((section) => (
               <div
                 key={section.id}
                 onClick={() => setSearchParams({ section: section.id })}
