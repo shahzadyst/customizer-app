@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link } from "react-router";
+import { useLoaderData, useFetcher, Link, useRevalidator } from "react-router";
 import { authenticate } from "../shopify.server";
 import {
   getCustomizers,
@@ -61,14 +61,16 @@ export const action = async ({ request }) => {
 export default function Customizers() {
   const { customizers } = useLoaderData();
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showInstructions, setShowInstructions] = useState({});
 
   useEffect(() => {
-    if (fetcher.data?.success) {
+    if (fetcher.data?.success && fetcher.state === "idle") {
       setShowCreateForm(false);
+      revalidator.revalidate();
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, fetcher.state, revalidator]);
 
   return (
     <s-page heading="Sign Customizers">
@@ -193,7 +195,15 @@ export default function Customizers() {
 
                         {dbId && (
                           <>
-                            <fetcher.Form method="post" style={{ display: 'inline' }}>
+                            <fetcher.Form
+                              method="post"
+                              style={{ display: 'inline' }}
+                              onSubmit={(e) => {
+                                if (!confirm(`Are you sure you want to ${customizer.isActive ? 'deactivate' : 'activate'} this customizer?`)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            >
                               <input type="hidden" name="action" value="updateStatus" />
                               <input type="hidden" name="id" value={dbId} />
                               <input type="hidden" name="isActive" value={(!customizer.isActive).toString()} />
@@ -206,7 +216,15 @@ export default function Customizers() {
                               </s-button>
                             </fetcher.Form>
 
-                            <fetcher.Form method="post" style={{ display: 'inline' }}>
+                            <fetcher.Form
+                              method="post"
+                              style={{ display: 'inline' }}
+                              onSubmit={(e) => {
+                                if (!confirm('Are you sure you want to delete this customizer? This action cannot be undone.')) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            >
                               <input type="hidden" name="action" value="delete" />
                               <input type="hidden" name="id" value={dbId} />
                               <s-button

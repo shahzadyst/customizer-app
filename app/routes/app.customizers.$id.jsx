@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link, useNavigate } from "react-router";
+import { useLoaderData, useFetcher, Link, useNavigate, useRevalidator } from "react-router";
 import { authenticate } from "../shopify.server";
 import { getCustomizer } from "../models/customizer.server";
 import {
@@ -198,13 +198,14 @@ export default function CustomizerSettings() {
   const { customizer, options } = useLoaderData();
   const fetcher = useFetcher();
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const [activeSection, setActiveSection] = useState("fonts");
 
   useEffect(() => {
-    if (fetcher.data?.success) {
-      navigate(".", { replace: true });
+    if (fetcher.data?.success && fetcher.state === "idle") {
+      revalidator.revalidate();
     }
-  }, [fetcher.data, navigate]);
+  }, [fetcher.data, fetcher.state, revalidator]);
 
   const tabStyle = {
     padding: '12px 20px',

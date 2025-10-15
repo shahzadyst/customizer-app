@@ -1,6 +1,7 @@
 export const loader = async ({ params, request }) => {
   const { shop } = params;
-  const appUrl = process.env.SHOPIFY_APP_URL || "";
+  const url = new URL(request.url);
+  const appUrl = process.env.SHOPIFY_APP_URL || `${url.protocol}//${url.host}`;
 
   const scriptContent = `
 (function() {
