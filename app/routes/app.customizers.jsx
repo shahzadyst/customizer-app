@@ -150,10 +150,11 @@ export default function Customizers() {
                 >
                   <s-stack direction="block" gap="base">
                     <s-stack direction="inline" gap="base" alignment="space-between">
-                      <Link
-                        to={dbId ? `/app/customizers/${dbId}` : '#'}
-                        style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}
-                      >
+                      <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => {
+                        if (dbId) {
+                          window.location.href = `/app/customizers/${dbId}`;
+                        }
+                      }}>
                         <s-stack direction="inline" gap="base" alignment="center">
                           <div style={{
                             width: '40px',
@@ -176,7 +177,7 @@ export default function Customizers() {
                             </s-text>
                           </s-stack>
                         </s-stack>
-                      </Link>
+                      </div>
 
                       <s-stack direction="inline" gap="tight" alignment="center">
                         <s-badge tone={customizer.isActive ? "success" : "default"}>

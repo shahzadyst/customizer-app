@@ -198,12 +198,16 @@ export default function Index() {
                 const customizerId = customizer.customizerId || (customizer._id ? customizer._id.toString() : 'no-id');
                 const dbId = customizer._id ? customizer._id.toString() : '';
                 return (
-                  <Link
+                  <div
                     key={dbId || customizerId}
-                    to={dbId ? `/app/customizers/${dbId}` : '#'}
-                    style={{ textDecoration: 'none' }}
+                    onClick={() => {
+                      if (dbId) {
+                        window.location.href = `/app/customizers/${dbId}`;
+                      }
+                    }}
+                    style={{ textDecoration: 'none', cursor: 'pointer' }}
                   >
-                    <s-box padding="base" borderWidth="base" borderRadius="base" style={{ cursor: 'pointer' }}>
+                    <s-box padding="base" borderWidth="base" borderRadius="base"  style={{ cursor: 'pointer' }}>
                       <s-stack direction="inline" gap="base" alignment="space-between">
                         <s-stack direction="inline" gap="base" alignment="center">
                           <div style={{
@@ -229,7 +233,7 @@ export default function Index() {
                         <span style={{ fontSize: '20px', color: '#6b7280' }}>›</span>
                       </s-stack>
                     </s-box>
-                  </Link>
+                  </div>
                 );
               })}
             </s-stack>
