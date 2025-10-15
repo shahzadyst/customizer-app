@@ -16,14 +16,13 @@ export default function HangingOptionSettings({ hangingOptions }) {
   };
 
   const handleAdd = (e) => {
-    e.preventDefault();
     const validationErrors = validateName(newOption.name);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewOption({ name: "" });
     setShowAddForm(false);
   };
@@ -51,15 +50,25 @@ export default function HangingOptionSettings({ hangingOptions }) {
             <input type="hidden" name="action" value="addHangingOption" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Hanging Option</s-text>
-              <s-text-field
-                label="Option Name"
-                value={newOption.name}
-                onChange={(value) => setNewOption({ name: value })}
-                name="name"
-                placeholder="e.g., Wall Mount, Desk Stand"
-                error={errors.optionName}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Option Name *</label>
+                <input
+                  type="text"
+                  value={newOption.name}
+                  onChange={(e) => setNewOption({ name: e.target.value })}
+                  name="name"
+                  placeholder="e.g., Wall Mount, Desk Stand"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.optionName ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.optionName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.optionName}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Option</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>

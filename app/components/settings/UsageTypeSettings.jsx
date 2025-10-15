@@ -16,14 +16,13 @@ export default function UsageTypeSettings({ usageTypes }) {
   };
 
   const handleAdd = (e) => {
-    e.preventDefault();
     const validationErrors = validateName(newUsageType.name);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewUsageType({ name: "" });
     setShowAddForm(false);
   };
@@ -51,15 +50,25 @@ export default function UsageTypeSettings({ usageTypes }) {
             <input type="hidden" name="action" value="addUsageType" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Usage Type</s-text>
-              <s-text-field
-                label="Usage Type Name"
-                value={newUsageType.name}
-                onChange={(value) => setNewUsageType({ name: value })}
-                name="name"
-                placeholder="e.g., Indoor, Outdoor"
-                error={errors.usageTypeName}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Usage Type Name *</label>
+                <input
+                  type="text"
+                  value={newUsageType.name}
+                  onChange={(e) => setNewUsageType({ name: e.target.value })}
+                  name="name"
+                  placeholder="e.g., Indoor, Outdoor"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.usageTypeName ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.usageTypeName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.usageTypeName}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Usage Type</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>

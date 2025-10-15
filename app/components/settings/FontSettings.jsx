@@ -19,14 +19,13 @@ export default function FontSettings({ fonts }) {
   };
 
   const handleAddFont = (e) => {
-    e.preventDefault();
     const validationErrors = validateFont(newFont.name, newFont.fontFamily);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewFont({ name: "", fontFamily: "" });
     setShowAddForm(false);
   };
@@ -54,23 +53,43 @@ export default function FontSettings({ fonts }) {
             <input type="hidden" name="action" value="addFont" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Font</s-text>
-              <s-text-field
-                label="Font Name"
-                value={newFont.name}
-                onChange={(value) => setNewFont({ ...newFont, name: value })}
-                name="name"
-                error={errors.fontName}
-                required
-              />
-              <s-text-field
-                label="Font Family (CSS)"
-                value={newFont.fontFamily}
-                onChange={(value) => setNewFont({ ...newFont, fontFamily: value })}
-                name="fontFamily"
-                placeholder="e.g., Arial, sans-serif"
-                error={errors.fontFamily}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Font Name *</label>
+                <input
+                  type="text"
+                  value={newFont.name}
+                  onChange={(e) => setNewFont({ ...newFont, name: e.target.value })}
+                  name="name"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.fontName ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.fontName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.fontName}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Font Family (CSS) *</label>
+                <input
+                  type="text"
+                  value={newFont.fontFamily}
+                  onChange={(e) => setNewFont({ ...newFont, fontFamily: e.target.value })}
+                  name="fontFamily"
+                  placeholder="e.g., Arial, sans-serif"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.fontFamily ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.fontFamily && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.fontFamily}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Font</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>

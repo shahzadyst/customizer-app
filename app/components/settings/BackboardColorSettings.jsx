@@ -19,14 +19,13 @@ export default function BackboardColorSettings({ backboardColors }) {
   };
 
   const handleAdd = (e) => {
-    e.preventDefault();
     const validationErrors = validateColor(newColor.name, newColor.hex);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewColor({ name: "", hex: "#000000" });
     setShowAddForm(false);
   };
@@ -54,23 +53,43 @@ export default function BackboardColorSettings({ backboardColors }) {
             <input type="hidden" name="action" value="addBackboardColor" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Backboard Color</s-text>
-              <s-text-field
-                label="Color Name"
-                value={newColor.name}
-                onChange={(value) => setNewColor({ ...newColor, name: value })}
-                name="name"
-                error={errors.colorName}
-                required
-              />
-              <s-text-field
-                label="Hex Code"
-                value={newColor.hex}
-                onChange={(value) => setNewColor({ ...newColor, hex: value })}
-                name="hex"
-                placeholder="#000000"
-                error={errors.colorHex}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Color Name *</label>
+                <input
+                  type="text"
+                  value={newColor.name}
+                  onChange={(e) => setNewColor({ ...newColor, name: e.target.value })}
+                  name="name"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.colorName ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.colorName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorName}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Hex Code *</label>
+                <input
+                  type="text"
+                  value={newColor.hex}
+                  onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                  name="hex"
+                  placeholder="#000000"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.colorHex ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.colorHex && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorHex}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Color</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>

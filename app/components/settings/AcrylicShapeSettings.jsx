@@ -23,14 +23,13 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
   };
 
   const handleAdd = (e) => {
-    e.preventDefault();
     const validationErrors = validateShape(newShape.name, newShape.imageUrl);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewShape({ name: "", imageUrl: "" });
     setShowAddForm(false);
   };
@@ -58,22 +57,42 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
             <input type="hidden" name="action" value="addAcrylicShape" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Acrylic Shape</s-text>
-              <s-text-field
-                label="Shape Name"
-                value={newShape.name}
-                onChange={(value) => setNewShape({ ...newShape, name: value })}
-                name="name"
-                error={errors.shapeName}
-                required
-              />
-              <s-text-field
-                label="Image URL"
-                value={newShape.imageUrl}
-                onChange={(value) => setNewShape({ ...newShape, imageUrl: value })}
-                name="imageUrl"
-                placeholder="https://..."
-                error={errors.imageUrl}
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Shape Name *</label>
+                <input
+                  type="text"
+                  value={newShape.name}
+                  onChange={(e) => setNewShape({ ...newShape, name: e.target.value })}
+                  name="name"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.shapeName ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.shapeName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.shapeName}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Image URL</label>
+                <input
+                  type="text"
+                  value={newShape.imageUrl}
+                  onChange={(e) => setNewShape({ ...newShape, imageUrl: e.target.value })}
+                  name="imageUrl"
+                  placeholder="https://..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.imageUrl ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.imageUrl && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.imageUrl}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Shape</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>

@@ -21,14 +21,13 @@ export default function SizeSettings({ sizes }) {
   };
 
   const handleAddSize = (e) => {
-    e.preventDefault();
     const validationErrors = validateSize(newSize.width, newSize.height);
     if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
       setErrors(validationErrors);
       return;
     }
     setErrors({});
-    e.target.submit();
     setNewSize({ width: "", height: "" });
     setShowAddForm(false);
   };
@@ -56,26 +55,44 @@ export default function SizeSettings({ sizes }) {
             <input type="hidden" name="action" value="addSize" />
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Size</s-text>
-              <s-text-field
-                label="Width (inches)"
-                type="number"
-                step="0.1"
-                value={newSize.width}
-                onChange={(value) => setNewSize({ ...newSize, width: value })}
-                name="width"
-                error={errors.sizeWidth}
-                required
-              />
-              <s-text-field
-                label="Height (inches)"
-                type="number"
-                step="0.1"
-                value={newSize.height}
-                onChange={(value) => setNewSize({ ...newSize, height: value })}
-                name="height"
-                error={errors.sizeHeight}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Width (inches) *</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newSize.width}
+                  onChange={(e) => setNewSize({ ...newSize, width: e.target.value })}
+                  name="width"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.sizeWidth ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.sizeWidth && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.sizeWidth}</div>}
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Height (inches) *</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newSize.height}
+                  onChange={(e) => setNewSize({ ...newSize, height: e.target.value })}
+                  name="height"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid ' + (errors.sizeHeight ? '#d32f2f' : '#ddd'),
+                    borderRadius: '4px',
+                    fontSize: '14px'
+                  }}
+                />
+                {errors.sizeHeight && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.sizeHeight}</div>}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Size</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>
