@@ -64,10 +64,7 @@ export const action = async ({ request }) => {
       case "addFont": {
         await addFont(shop, {
           name: formData.get("name"),
-          fontFamily: formData.get("font_family"),
-          fontUrl: formData.get("font_url") || null,
-          displayOrder: parseInt(formData.get("display_order")) || 0,
-          isActive: true,
+          fontFamily: formData.get("fontFamily") || formData.get("font_family"),
         });
         return { success: true };
       }
@@ -75,22 +72,15 @@ export const action = async ({ request }) => {
       case "addColor": {
         await addColor(shop, {
           name: formData.get("name"),
-          hexValue: formData.get("hex_value"),
-          displayOrder: parseInt(formData.get("display_order")) || 0,
-          isActive: true,
+          hex: formData.get("hex") || formData.get("hex_value"),
         });
         return { success: true };
       }
 
       case "addSize": {
         await addSize(shop, {
-          name: formData.get("name"),
-          width: parseFloat(formData.get("width")) || null,
-          height: parseFloat(formData.get("height")) || null,
-          unit: formData.get("unit") || "inches",
-          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
-          displayOrder: parseInt(formData.get("display_order")) || 0,
-          isActive: true,
+          width: parseFloat(formData.get("width")),
+          height: parseFloat(formData.get("height")),
         });
         return { success: true };
       }
@@ -120,10 +110,7 @@ export const action = async ({ request }) => {
       case "addBackboardColor": {
         await addBackboardColor(shop, {
           name: formData.get("name"),
-          hexValue: formData.get("hex_value"),
-          priceModifier: parseFloat(formData.get("price_modifier")) || 0,
-          displayOrder: parseInt(formData.get("display_order")) || 0,
-          isActive: true,
+          hex: formData.get("hex") || formData.get("hex_value"),
         });
         return { success: true };
       }

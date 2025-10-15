@@ -225,3 +225,53 @@ export async function deleteHangingOption(shop, optionId) {
   });
   return result;
 }
+
+export async function getPricings(shop, customizerId = null) {
+  const db = await getDb();
+  const query = customizerId
+    ? { shop, $or: [{ customizerId }, { customizerId: null }] }
+    : { shop };
+  const pricings = await db.collection(collections.pricings).find(query).toArray();
+  return pricings;
+}
+
+export async function getPricing(shop, pricingId) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const pricing = await db.collection(collections.pricings).findOne({
+    _id: new ObjectId(pricingId),
+    shop,
+  });
+  return pricing;
+}
+
+export async function addPricing(shop, pricingData, customizerId = null) {
+  const db = await getDb();
+  const result = await db.collection(collections.pricings).insertOne({
+    shop,
+    customizerId,
+    ...pricingData,
+    createdAt: new Date(),
+  });
+  return result;
+}
+
+export async function updatePricing(shop, pricingId, pricingData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.pricings).updateOne(
+    { _id: new ObjectId(pricingId), shop },
+    { $set: { ...pricingData, updatedAt: new Date() } }
+  );
+  return result;
+}
+
+export async function deletePricing(shop, pricingId) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.pricings).deleteOne({
+    _id: new ObjectId(pricingId),
+    shop,
+  });
+  return result;
+}

@@ -36,4 +36,5 @@ export const collections = {
   acrylicShapes: 'acrylic_shapes',
   backboardColors: 'backboard_colors',
   hangingOptions: 'hanging_options',
+  pricings: 'pricings',
 };
