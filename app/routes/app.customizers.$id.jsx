@@ -27,41 +27,73 @@ import {
 } from "../models/signage.server";
 
 export const loader = async ({ request, params }) => {
-  const { session } = await authenticate.admin(request);
-  const shopDomain = session.shop;
-  const { id } = params;
+  try {
+    console.log('=== CUSTOMIZER DETAIL LOADER START ===');
+    console.log('Params ID:', params.id);
 
-  const customizer = await getCustomizer(shopDomain, id);
+    const { session } = await authenticate.admin(request);
+    const shopDomain = session.shop;
 
-  if (!customizer) {
-    throw new Response("Customizer not found", { status: 404 });
+    console.log('Authenticated shop:', shopDomain);
+
+    if (!shopDomain) {
+      console.log('Shop is null, skipping...');
+      throw new Response("Unauthorized", { status: 401 });
+    }
+
+    const { id } = params;
+    console.log('Fetching customizer:', id);
+
+    const customizer = await getCustomizer(shopDomain, id);
+    console.log('Got customizer:', customizer ? 'Found' : 'Not found');
+
+    if (!customizer) {
+      throw new Response("Customizer not found", { status: 404 });
+    }
+
+    const customizerId = customizer.customizerId || null;
+    console.log('Fetching options for customizerId:', customizerId);
+
+    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+      getFonts(shopDomain, customizerId),
+      getColors(shopDomain, customizerId),
+      getSizes(shopDomain, customizerId),
+      getUsageTypes(shopDomain, customizerId),
+      getAcrylicShapes(shopDomain, customizerId),
+      getBackboardColors(shopDomain, customizerId),
+      getHangingOptions(shopDomain, customizerId),
+    ]);
+
+    console.log('Options loaded:', {
+      fonts: fonts.length,
+      colors: colors.length,
+      sizes: sizes.length,
+      usageTypes: usageTypes.length,
+      acrylicShapes: acrylicShapes.length,
+      backboardColors: backboardColors.length,
+      hangingOptions: hangingOptions.length,
+    });
+
+    console.log('=== LOADER SUCCESS - RETURNING DATA ===');
+
+    return {
+      shop: shopDomain,
+      customizer,
+      options: {
+        fonts,
+        colors,
+        sizes,
+        usageTypes,
+        acrylicShapes,
+        backboardColors,
+        hangingOptions,
+      },
+    };
+  } catch (error) {
+    console.error('=== LOADER ERROR ===');
+    console.error('Error details:', error);
+    throw error;
   }
-
-  const customizerId = customizer.customizerId || null;
-
-  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
-    getFonts(shopDomain, customizerId),
-    getColors(shopDomain, customizerId),
-    getSizes(shopDomain, customizerId),
-    getUsageTypes(shopDomain, customizerId),
-    getAcrylicShapes(shopDomain, customizerId),
-    getBackboardColors(shopDomain, customizerId),
-    getHangingOptions(shopDomain, customizerId),
-  ]);
-
-  return {
-    shop: shopDomain,
-    customizer,
-    options: {
-      fonts,
-      colors,
-      sizes,
-      usageTypes,
-      acrylicShapes,
-      backboardColors,
-      hangingOptions,
-    },
-  };
 };
 
 export const action = async ({ request, params }) => {
@@ -179,9 +211,17 @@ export const action = async ({ request, params }) => {
 };
 
 export default function CustomizerSettings() {
-  const { customizer, options } = useLoaderData();
+  console.log('=== COMPONENT RENDERING ===');
+
+  const loaderData = useLoaderData();
+  console.log('Loader data received:', loaderData);
+
+  const { customizer, options } = loaderData;
   const fetcher = useFetcher();
   const navigate = useNavigate();
+
+  console.log('Customizer:', customizer?.name);
+  console.log('Options:', options);
 
   const [newFont, setNewFont] = useState({ name: "", fontFamily: "" });
   const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
@@ -190,6 +230,8 @@ export default function CustomizerSettings() {
   const [newAcrylicShape, setNewAcrylicShape] = useState({ name: "", imageUrl: "" });
   const [newBackboardColor, setNewBackboardColor] = useState({ name: "", hex: "#000000" });
   const [newHangingOption, setNewHangingOption] = useState({ name: "" });
+
+  console.log('About to render page component');
 
   return (
     <s-page
