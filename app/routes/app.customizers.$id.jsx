@@ -218,11 +218,23 @@ export const action = async ({ request, params }) => {
 };
 
 export default function CustomizerSettings() {
-  const { customizer, options } = useLoaderData();
+  const data = useLoaderData();
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [activeSection, setActiveSection] = useState("fonts");
+
+  if (!data || !data.customizer) {
+    return (
+      <s-page heading="Loading...">
+        <s-section>
+          <s-text>Loading customizer data...</s-text>
+        </s-section>
+      </s-page>
+    );
+  }
+
+  const { customizer, options } = data;
 
   useEffect(() => {
     if (fetcher.data?.success && fetcher.state === "idle") {
