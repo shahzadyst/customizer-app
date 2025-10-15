@@ -59,7 +59,7 @@ export default function PricingsPage() {
           borderBottom: '1px solid #e0e0e0'
         }}>
           <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Pricing</h2>
-          <s-button variant="primary" onClick={() => navigate('/app/pricings/new')}>
+          <s-button variant="primary" onClick={() => navigate('/app/pricing-settings/new')}>
             Add Pricing
           </s-button>
         </div>
@@ -97,7 +97,7 @@ export default function PricingsPage() {
                 <tr
                   key={pricing._id.toString()}
                   style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}
-                  onClick={() => navigate(`/app/pricings/${pricing._id.toString()}`)}
+                  onClick={() => navigate(`/app/pricing-settings/${pricing._id.toString()}`)}
                 >
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ fontWeight: 500 }}>{pricing.name}</div>
