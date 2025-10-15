@@ -197,6 +197,15 @@ export default function Customizers() {
 
                         {dbId && (
                           <>
+                            <Link to={`/app/customizers/${dbId}`}>
+                              <s-button
+                                size="small"
+                                variant="primary"
+                              >
+                                Configure
+                              </s-button>
+                            </Link>
+
                             <fetcher.Form
                               method="post"
                               style={{ display: 'inline' }}
