@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useFetcher, useNavigate, useRevalidator } from "react-router";
 import { authenticate } from "../shopify.server";
-import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getCustomizer } from "../models/customizer.server";
 import {
   getFonts,
@@ -28,48 +27,57 @@ import {
 } from "../models/signage.server";
 
 export const loader = async ({ request, params }) => {
-  const { session } = await authenticate.admin(request);
-  const shopDomain = session.shop;
-  const { id } = params;
+  try {
+    const { session } = await authenticate.admin(request);
+    const shopDomain = session.shop;
+    const { id } = params;
 
-  console.log('Loading customizer settings for ID:', id, 'Shop:', shopDomain);
+    console.log('Loading customizer settings for ID:', id, 'Shop:', shopDomain);
 
-  const customizer = await getCustomizer(shopDomain, id);
+    const customizer = await getCustomizer(shopDomain, id);
 
-  if (!customizer) {
-    console.error('Customizer not found:', id);
-    throw new Response("Customizer not found", { status: 404 });
+    if (!customizer) {
+      console.error('Customizer not found:', id);
+      throw new Response("Customizer not found", { status: 404 });
+    }
+
+    console.log('Found customizer:', customizer);
+
+    const customizerId = customizer.customizerId || null;
+
+    console.log('Using customizerId for queries:', customizerId);
+
+    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+      getFonts(shopDomain, customizerId),
+      getColors(shopDomain, customizerId),
+      getSizes(shopDomain, customizerId),
+      getUsageTypes(shopDomain, customizerId),
+      getAcrylicShapes(shopDomain, customizerId),
+      getBackboardColors(shopDomain, customizerId),
+      getHangingOptions(shopDomain, customizerId),
+    ]);
+
+    return {
+      shop: shopDomain,
+      customizer,
+      options: {
+        fonts,
+        colors,
+        sizes,
+        usageTypes,
+        acrylicShapes,
+        backboardColors,
+        hangingOptions,
+      },
+    };
+  } catch (error) {
+    console.error('Loader error details:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      name: error?.name || 'Unknown',
+    });
+    throw error;
   }
-
-  console.log('Found customizer:', customizer);
-
-  const customizerId = customizer.customizerId || null;
-
-  console.log('Using customizerId for queries:', customizerId);
-
-  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
-    getFonts(shopDomain, customizerId),
-    getColors(shopDomain, customizerId),
-    getSizes(shopDomain, customizerId),
-    getUsageTypes(shopDomain, customizerId),
-    getAcrylicShapes(shopDomain, customizerId),
-    getBackboardColors(shopDomain, customizerId),
-    getHangingOptions(shopDomain, customizerId),
-  ]);
-
-  return {
-    shop: shopDomain,
-    customizer,
-    options: {
-      fonts,
-      colors,
-      sizes,
-      usageTypes,
-      acrylicShapes,
-      backboardColors,
-      hangingOptions,
-    },
-  };
 };
 
 export const action = async ({ request, params }) => {
@@ -662,7 +670,21 @@ export default function CustomizerSettings() {
   );
 }
 
-export const ErrorBoundary = boundary.error(({ error }) => {
+export function ErrorBoundary({ error }) {
   console.error('Customizer settings error:', error);
-  return boundary.defaultErrorBoundary({ error });
-});
+
+  return (
+    <s-page heading="Error">
+      <s-section>
+        <s-stack direction="block" gap="base">
+          <s-text color="critical">
+            An error occurred while loading the customizer settings.
+          </s-text>
+          <s-text>
+            {error?.message || 'Unknown error'}
+          </s-text>
+        </s-stack>
+      </s-section>
+    </s-page>
+  );
+}
