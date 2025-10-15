@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLoaderData, useFetcher, useNavigate } from "react-router";
+import { useState, useRef } from "react";
+import { useLoaderData, useFetcher, useNavigate, useNavigation } from "react-router";
 import { authenticate } from "../shopify.server";
 import { getCustomizer } from "../models/customizer.server";
 import {
@@ -211,17 +211,11 @@ export const action = async ({ request, params }) => {
 };
 
 export default function CustomizerSettings() {
-  console.log('=== COMPONENT RENDERING ===');
-
   const loaderData = useLoaderData();
-  console.log('Loader data received:', loaderData);
-
   const { customizer, options } = loaderData;
   const fetcher = useFetcher();
   const navigate = useNavigate();
-
-  console.log('Customizer:', customizer?.name);
-  console.log('Options:', options);
+  const navigation = useNavigation();
 
   const [newFont, setNewFont] = useState({ name: "", fontFamily: "" });
   const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
@@ -230,20 +224,231 @@ export default function CustomizerSettings() {
   const [newAcrylicShape, setNewAcrylicShape] = useState({ name: "", imageUrl: "" });
   const [newBackboardColor, setNewBackboardColor] = useState({ name: "", hex: "#000000" });
   const [newHangingOption, setNewHangingOption] = useState({ name: "" });
+  const [errors, setErrors] = useState({});
 
-  console.log('About to render page component');
+  const fontsRef = useRef(null);
+  const colorsRef = useRef(null);
+  const sizesRef = useRef(null);
+  const usageTypesRef = useRef(null);
+  const acrylicShapesRef = useRef(null);
+  const backboardColorsRef = useRef(null);
+  const hangingOptionsRef = useRef(null);
+
+  const scrollToSection = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const validateFont = (name, fontFamily) => {
+    const errors = {};
+    if (!name || name.trim().length === 0) {
+      errors.fontName = "Font name is required";
+    }
+    if (!fontFamily || fontFamily.trim().length === 0) {
+      errors.fontFamily = "Font family is required";
+    }
+    return errors;
+  };
+
+  const validateColor = (name, hex) => {
+    const errors = {};
+    if (!name || name.trim().length === 0) {
+      errors.colorName = "Color name is required";
+    }
+    if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      errors.colorHex = "Valid hex color is required (e.g., #000000)";
+    }
+    return errors;
+  };
+
+  const validateSize = (width, height) => {
+    const errors = {};
+    const w = parseFloat(width);
+    const h = parseFloat(height);
+    if (!width || isNaN(w) || w <= 0) {
+      errors.sizeWidth = "Width must be a positive number";
+    }
+    if (!height || isNaN(h) || h <= 0) {
+      errors.sizeHeight = "Height must be a positive number";
+    }
+    return errors;
+  };
+
+  const validateName = (name, fieldName) => {
+    const errors = {};
+    if (!name || name.trim().length === 0) {
+      errors[fieldName] = "Name is required";
+    }
+    return errors;
+  };
+
+  const validateImageUrl = (url) => {
+    if (url && url.trim().length > 0) {
+      try {
+        new URL(url);
+        return {};
+      } catch {
+        return { imageUrl: "Invalid URL format" };
+      }
+    }
+    return {};
+  };
+
+  const handleAddFont = (e) => {
+    e.preventDefault();
+    const validationErrors = validateFont(newFont.name, newFont.fontFamily);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewFont({ name: "", fontFamily: "" });
+  };
+
+  const handleAddColor = (e) => {
+    e.preventDefault();
+    const validationErrors = validateColor(newColor.name, newColor.hex);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewColor({ name: "", hex: "#000000" });
+  };
+
+  const handleAddSize = (e) => {
+    e.preventDefault();
+    const validationErrors = validateSize(newSize.width, newSize.height);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewSize({ width: "", height: "" });
+  };
+
+  const handleAddUsageType = (e) => {
+    e.preventDefault();
+    const validationErrors = validateName(newUsageType.name, 'usageTypeName');
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewUsageType({ name: "" });
+  };
+
+  const handleAddAcrylicShape = (e) => {
+    e.preventDefault();
+    const nameErrors = validateName(newAcrylicShape.name, 'acrylicShapeName');
+    const urlErrors = validateImageUrl(newAcrylicShape.imageUrl);
+    const validationErrors = { ...nameErrors, ...urlErrors };
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewAcrylicShape({ name: "", imageUrl: "" });
+  };
+
+  const handleAddBackboardColor = (e) => {
+    e.preventDefault();
+    const validationErrors = validateColor(newBackboardColor.name, newBackboardColor.hex);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewBackboardColor({ name: "", hex: "#000000" });
+  };
+
+  const handleAddHangingOption = (e) => {
+    e.preventDefault();
+    const validationErrors = validateName(newHangingOption.name, 'hangingOptionName');
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    e.target.submit();
+    setNewHangingOption({ name: "" });
+  };
+
+  const isLoading = navigation.state === "loading";
+
+  if (isLoading) {
+    return (
+      <s-page
+        heading="Loading..."
+        backAction={{ onAction: () => navigate("/app/customizers") }}
+      >
+        <s-stack direction="block" gap="large">
+          <s-section>
+            <s-box padding="base" background="surface">
+              <s-stack direction="block" gap="base">
+                <div style={{ height: '20px', background: '#e0e0e0', borderRadius: '4px', width: '40%' }} />
+                <div style={{ height: '40px', background: '#e0e0e0', borderRadius: '4px' }} />
+                <div style={{ height: '40px', background: '#e0e0e0', borderRadius: '4px' }} />
+                <div style={{ height: '36px', background: '#e0e0e0', borderRadius: '4px', width: '120px' }} />
+              </s-stack>
+            </s-box>
+          </s-section>
+          <s-section>
+            <s-box padding="base" background="surface">
+              <s-stack direction="block" gap="base">
+                <div style={{ height: '20px', background: '#e0e0e0', borderRadius: '4px', width: '40%' }} />
+                <div style={{ height: '40px', background: '#e0e0e0', borderRadius: '4px' }} />
+                <div style={{ height: '40px', background: '#e0e0e0', borderRadius: '4px' }} />
+              </s-stack>
+            </s-box>
+          </s-section>
+        </s-stack>
+      </s-page>
+    );
+  }
 
   return (
-    <s-page
-      heading={`Configure: ${customizer.name}`}
-      backAction={{ onAction: () => navigate("/app/customizers") }}
-    >
-      <s-section title="Fonts">
+    <div style={{ display: 'flex', gap: '24px' }}>
+      <div style={{
+        width: '200px',
+        position: 'sticky',
+        top: '0',
+        height: 'fit-content',
+        background: '#f9f9f9',
+        borderRadius: '8px',
+        padding: '16px'
+      }}>
+        <s-stack direction="block" gap="tight">
+          <s-text weight="semibold" size="large">Sections</s-text>
+          <s-stack direction="block" gap="extraTight">
+            <s-button onClick={() => scrollToSection(fontsRef)} size="small" variant="plain">Fonts</s-button>
+            <s-button onClick={() => scrollToSection(colorsRef)} size="small" variant="plain">Colors</s-button>
+            <s-button onClick={() => scrollToSection(sizesRef)} size="small" variant="plain">Sizes</s-button>
+            <s-button onClick={() => scrollToSection(usageTypesRef)} size="small" variant="plain">Usage Types</s-button>
+            <s-button onClick={() => scrollToSection(acrylicShapesRef)} size="small" variant="plain">Acrylic Shapes</s-button>
+            <s-button onClick={() => scrollToSection(backboardColorsRef)} size="small" variant="plain">Backboard Colors</s-button>
+            <s-button onClick={() => scrollToSection(hangingOptionsRef)} size="small" variant="plain">Hanging Options</s-button>
+          </s-stack>
+        </s-stack>
+      </div>
+
+      <div style={{ flex: 1 }}>
+        <s-page
+          heading={`Configure: ${customizer.name}`}
+          backAction={{ onAction: () => navigate("/app/customizers") }}
+        >
+          <div ref={fontsRef}>
+            <s-section title="Fonts">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Font</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddFont}>
                 <input type="hidden" name="action" value="addFont" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -251,6 +456,7 @@ export default function CustomizerSettings() {
                     value={newFont.name}
                     onChange={(value) => setNewFont({ ...newFont, name: value })}
                     name="name"
+                    error={errors.fontName}
                     required
                   />
                   <s-text-field
@@ -259,6 +465,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewFont({ ...newFont, fontFamily: value })}
                     name="fontFamily"
                     placeholder="e.g., Arial, sans-serif"
+                    error={errors.fontFamily}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Font</s-button>
@@ -285,14 +492,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Colors">
+          <div ref={colorsRef}>
+            <s-section title="Colors">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Color</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddColor}>
                 <input type="hidden" name="action" value="addColor" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -300,6 +509,7 @@ export default function CustomizerSettings() {
                     value={newColor.name}
                     onChange={(value) => setNewColor({ ...newColor, name: value })}
                     name="name"
+                    error={errors.colorName}
                     required
                   />
                   <s-text-field
@@ -308,6 +518,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewColor({ ...newColor, hex: value })}
                     name="hex"
                     placeholder="#000000"
+                    error={errors.colorHex}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Color</s-button>
@@ -343,14 +554,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Sizes">
+          <div ref={sizesRef}>
+            <s-section title="Sizes">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Size</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddSize}>
                 <input type="hidden" name="action" value="addSize" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -360,6 +573,7 @@ export default function CustomizerSettings() {
                     value={newSize.width}
                     onChange={(value) => setNewSize({ ...newSize, width: value })}
                     name="width"
+                    error={errors.sizeWidth}
                     required
                   />
                   <s-text-field
@@ -369,6 +583,7 @@ export default function CustomizerSettings() {
                     value={newSize.height}
                     onChange={(value) => setNewSize({ ...newSize, height: value })}
                     name="height"
+                    error={errors.sizeHeight}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Size</s-button>
@@ -392,14 +607,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Usage Types">
+          <div ref={usageTypesRef}>
+            <s-section title="Usage Types">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Usage Type</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddUsageType}>
                 <input type="hidden" name="action" value="addUsageType" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -408,6 +625,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewUsageType({ name: value })}
                     name="name"
                     placeholder="e.g., Indoor, Outdoor"
+                    error={errors.usageTypeName}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Usage Type</s-button>
@@ -431,14 +649,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Acrylic Shapes">
+          <div ref={acrylicShapesRef}>
+            <s-section title="Acrylic Shapes">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Acrylic Shape</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddAcrylicShape}>
                 <input type="hidden" name="action" value="addAcrylicShape" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -446,6 +666,7 @@ export default function CustomizerSettings() {
                     value={newAcrylicShape.name}
                     onChange={(value) => setNewAcrylicShape({ ...newAcrylicShape, name: value })}
                     name="name"
+                    error={errors.acrylicShapeName}
                     required
                   />
                   <s-text-field
@@ -454,6 +675,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewAcrylicShape({ ...newAcrylicShape, imageUrl: value })}
                     name="imageUrl"
                     placeholder="https://..."
+                    error={errors.imageUrl}
                   />
                   <s-button type="submit" variant="primary">Add Shape</s-button>
                 </s-stack>
@@ -481,14 +703,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Backboard Colors">
+          <div ref={backboardColorsRef}>
+            <s-section title="Backboard Colors">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Backboard Color</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddBackboardColor}>
                 <input type="hidden" name="action" value="addBackboardColor" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -496,6 +720,7 @@ export default function CustomizerSettings() {
                     value={newBackboardColor.name}
                     onChange={(value) => setNewBackboardColor({ ...newBackboardColor, name: value })}
                     name="name"
+                    error={errors.colorName}
                     required
                   />
                   <s-text-field
@@ -504,6 +729,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewBackboardColor({ ...newBackboardColor, hex: value })}
                     name="hex"
                     placeholder="#000000"
+                    error={errors.colorHex}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Backboard Color</s-button>
@@ -539,14 +765,16 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
+            </s-section>
+          </div>
 
-      <s-section title="Hanging Options">
+          <div ref={hangingOptionsRef}>
+            <s-section title="Hanging Options">
         <s-stack direction="block" gap="base">
           <s-box padding="base" background="surface">
             <s-stack direction="block" gap="base">
               <s-text weight="semibold">Add New Hanging Option</s-text>
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" onSubmit={handleAddHangingOption}>
                 <input type="hidden" name="action" value="addHangingOption" />
                 <s-stack direction="block" gap="base">
                   <s-text-field
@@ -555,6 +783,7 @@ export default function CustomizerSettings() {
                     onChange={(value) => setNewHangingOption({ name: value })}
                     name="name"
                     placeholder="e.g., Wall Mount, Desk Stand"
+                    error={errors.hangingOptionName}
                     required
                   />
                   <s-button type="submit" variant="primary">Add Hanging Option</s-button>
@@ -578,7 +807,10 @@ export default function CustomizerSettings() {
             ))}
           </s-stack>
         </s-stack>
-      </s-section>
-    </s-page>
+            </s-section>
+          </div>
+        </s-page>
+      </div>
+    </div>
   );
 }
