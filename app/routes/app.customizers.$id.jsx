@@ -43,7 +43,9 @@ export const loader = async ({ request, params }) => {
 
   console.log('Found customizer:', customizer);
 
-  const customizerId = customizer.customizerId || id;
+  const customizerId = customizer.customizerId || null;
+
+  console.log('Using customizerId for queries:', customizerId);
 
   const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
     getFonts(shopDomain, customizerId),
@@ -75,7 +77,14 @@ export const action = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get("action");
   const shop = session.shop;
-  const customizerId = params.id;
+  const { id } = params;
+
+  const customizer = await getCustomizer(shop, id);
+  if (!customizer) {
+    return Response.json({ error: "Customizer not found" }, { status: 404 });
+  }
+
+  const customizerId = customizer.customizerId || null;
 
   try {
     switch (action) {
