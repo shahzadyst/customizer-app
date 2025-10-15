@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link, useRevalidator } from "react-router";
+import { useLoaderData, useFetcher, Link, useRevalidator, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import {
   getCustomizers,
@@ -62,6 +62,7 @@ export default function Customizers() {
   const { customizers } = useLoaderData();
   const fetcher = useFetcher();
   const revalidator = useRevalidator();
+  const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showInstructions, setShowInstructions] = useState({});
 
@@ -152,7 +153,7 @@ export default function Customizers() {
                     <s-stack direction="inline" gap="base" alignment="space-between">
                       <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => {
                         if (dbId) {
-                          window.location.href = `/app/customizers/${dbId}`;
+                          navigate(`/app/customizers/${dbId}`);
                         }
                       }}>
                         <s-stack direction="inline" gap="base" alignment="center">

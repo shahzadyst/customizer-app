@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { getCustomizers } from "../models/customizer.server";
@@ -17,6 +17,7 @@ export const loader = async ({ request }) => {
 
 export default function Index() {
   const { customizers } = useLoaderData();
+  const navigate = useNavigate();
   const activeCustomizers = customizers.filter(c => c.isActive);
 
   return (
@@ -202,7 +203,7 @@ export default function Index() {
                     key={dbId || customizerId}
                     onClick={() => {
                       if (dbId) {
-                        window.location.href = `/app/customizers/${dbId}`;
+                        navigate(`/app/customizers/${dbId}`);
                       }
                     }}
                     style={{ textDecoration: 'none', cursor: 'pointer' }}
