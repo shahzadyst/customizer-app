@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useLoaderData, useFetcher, Link, useNavigate, useRevalidator } from "react-router";
+import { useLoaderData, useFetcher, useNavigate, useRevalidator } from "react-router";
 import { authenticate } from "../shopify.server";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getCustomizer } from "../models/customizer.server";
 import {
   getFonts,
@@ -31,11 +32,16 @@ export const loader = async ({ request, params }) => {
   const shopDomain = session.shop;
   const { id } = params;
 
+  console.log('Loading customizer settings for ID:', id, 'Shop:', shopDomain);
+
   const customizer = await getCustomizer(shopDomain, id);
 
   if (!customizer) {
+    console.error('Customizer not found:', id);
     throw new Response("Customizer not found", { status: 404 });
   }
+
+  console.log('Found customizer:', customizer);
 
   const customizerId = customizer.customizerId || id;
 
@@ -272,9 +278,9 @@ export default function CustomizerSettings() {
       <s-section>
         <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base" alignment="flex-end">
-            <Link to="/app/customizers">
-              <s-button variant="secondary">Back to Customizers</s-button>
-            </Link>
+            <s-button variant="secondary" onClick={() => navigate('/app/customizers')}>
+              Back to Customizers
+            </s-button>
           </s-stack>
 
           <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '24px' }}>
@@ -646,3 +652,8 @@ export default function CustomizerSettings() {
     </s-page>
   );
 }
+
+export const ErrorBoundary = boundary.error(({ error }) => {
+  console.error('Customizer settings error:', error);
+  return boundary.defaultErrorBoundary({ error });
+});
