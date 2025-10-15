@@ -33,7 +33,23 @@ export const loader = async ({ request, params }) => {
 };
 
 export default function CustomizerSettings() {
-  const { customizer } = useLoaderData();
+  console.log('=== COMPONENT RENDERING ===');
+  const data = useLoaderData();
+  console.log('Component received data:', data);
+
+  if (!data || !data.customizer) {
+    console.log('No data or customizer in component');
+    return (
+      <s-page heading="Error">
+        <s-section>
+          <s-text>Failed to load customizer data</s-text>
+        </s-section>
+      </s-page>
+    );
+  }
+
+  const { customizer } = data;
+  console.log('Rendering customizer:', customizer.name);
 
   return (
     <s-page heading={`Settings: ${customizer.name}`}>
