@@ -23,13 +23,14 @@ import {
   getHangingOptions,
   addHangingOption,
   deleteHangingOption,
+  getPricings,
 } from "../models/signage.server";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
 
-  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+  const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions, pricings] = await Promise.all([
     getFonts(shopDomain),
     getColors(shopDomain),
     getSizes(shopDomain),
@@ -37,6 +38,7 @@ export const loader = async ({ request }) => {
     getAcrylicShapes(shopDomain),
     getBackboardColors(shopDomain),
     getHangingOptions(shopDomain),
+    getPricings(shopDomain),
   ]);
 
   return {
@@ -50,6 +52,7 @@ export const loader = async ({ request }) => {
       backboardColors,
       hangingOptions,
     },
+    pricings,
   };
 };
 

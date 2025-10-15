@@ -13,12 +13,12 @@ const POPULAR_GOOGLE_FONTS = [
   "Rubik", "Shadows Into Light", "Titillium Web", "Varela Round", "Zilla Slab"
 ];
 
-export default function FontSettings({ fonts }) {
+export default function FontSettings({ fonts, pricings = [] }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
   const [showGoogleFontsModal, setShowGoogleFontsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newFont, setNewFont] = useState({ name: "", fontFamily: "" });
+  const [newFont, setNewFont] = useState({ name: "", fontFamily: "", pricingId: "" });
   const [errors, setErrors] = useState({});
   const [loadedFonts, setLoadedFonts] = useState(new Set());
 
@@ -45,7 +45,7 @@ export default function FontSettings({ fonts }) {
 
   const handleSelectGoogleFont = (fontFamily) => {
     loadGoogleFont(fontFamily);
-    setNewFont({ name: fontFamily, fontFamily: `'${fontFamily}', sans-serif` });
+    setNewFont({ name: fontFamily, fontFamily: `'${fontFamily}', sans-serif`, pricingId: newFont.pricingId });
     setShowGoogleFontsModal(false);
   };
 
@@ -57,7 +57,7 @@ export default function FontSettings({ fonts }) {
       return;
     }
     setErrors({});
-    setNewFont({ name: "", fontFamily: "" });
+    setNewFont({ name: "", fontFamily: "", pricingId: "" });
     setShowAddForm(false);
   };
 
@@ -202,6 +202,33 @@ export default function FontSettings({ fonts }) {
                 {errors.fontFamily && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.fontFamily}</div>}
               </div>
 
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Pricing</label>
+                <select
+                  value={newFont.pricingId}
+                  onChange={(e) => setNewFont({ ...newFont, pricingId: e.target.value })}
+                  name="pricingId"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="">No specific pricing</option>
+                  {pricings.map((pricing) => (
+                    <option key={pricing._id.toString()} value={pricing._id.toString()}>
+                      {pricing.name}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                  Optionally assign a pricing configuration to this font for advanced pricing rules.
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Font</s-button>
                 <s-button type="button" onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>
@@ -321,34 +348,41 @@ export default function FontSettings({ fonts }) {
             <tr style={{ borderBottom: '1px solid #e0e0e0' }}>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Font Name</th>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Font Family</th>
+              <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Pricing</th>
               <th style={{ padding: '16px', textAlign: 'right', fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {fonts.length === 0 ? (
               <tr>
-                <td colSpan="3" style={{ padding: '32px', textAlign: 'center', color: '#666' }}>
+                <td colSpan="4" style={{ padding: '32px', textAlign: 'center', color: '#666' }}>
                   No fonts added yet. Click "Add Font" to get started.
                 </td>
               </tr>
             ) : (
-              fonts.map((font) => (
-                <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: '16px' }}>
-                    <s-text weight="semibold">{font.name}</s-text>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text color="subdued">{font.fontFamily}</s-text>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="deleteFont" />
-                      <input type="hidden" name="id" value={font._id.toString()} />
-                      <s-button size="small" variant="destructive" type="submit">Delete</s-button>
-                    </fetcher.Form>
-                  </td>
-                </tr>
-              ))
+              fonts.map((font) => {
+                const pricing = pricings.find(p => p._id.toString() === font.pricingId);
+                return (
+                  <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '16px' }}>
+                      <s-text weight="semibold">{font.name}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{font.fontFamily}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{pricing ? pricing.name : '-'}</s-text>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <fetcher.Form method="post" style={{ display: 'inline' }}>
+                        <input type="hidden" name="action" value="deleteFont" />
+                        <input type="hidden" name="id" value={font._id.toString()} />
+                        <s-button size="small" variant="destructive" type="submit">Delete</s-button>
+                      </fetcher.Form>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

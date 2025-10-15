@@ -1,5 +1,4 @@
-import { json, redirect } from "@react-router/node";
-import { useLoaderData, useNavigate, useFetcher } from "react-router";
+import { redirect, useLoaderData, useNavigate, useFetcher } from "react-router";
 import { useState } from "react";
 import { authenticate } from "../shopify.server";
 import { getPricing, addPricing, updatePricing, deletePricing } from "../models/signage.server";
@@ -9,7 +8,7 @@ export const loader = async ({ request, params }) => {
   const { id } = params;
 
   if (id === "new") {
-    return json({
+    return {
       pricing: {
         name: "",
         label: "",
@@ -18,7 +17,7 @@ export const loader = async ({ request, params }) => {
         sizeBoundaries: []
       },
       isNew: true
-    });
+    };
   }
 
   const pricing = await getPricing(session.shop, id);
@@ -27,7 +26,7 @@ export const loader = async ({ request, params }) => {
     throw new Response("Pricing not found", { status: 404 });
   }
 
-  return json({ pricing, isNew: false });
+  return { pricing, isNew: false };
 };
 
 export const action = async ({ request, params }) => {

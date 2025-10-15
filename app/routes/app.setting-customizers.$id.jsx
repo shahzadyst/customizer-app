@@ -24,6 +24,7 @@ import {
   getHangingOptions,
   addHangingOption,
   deleteHangingOption,
+  getPricings,
 } from "../models/signage.server";
 
 import FontSettings from "../components/settings/FontSettings";
@@ -52,7 +53,7 @@ export const loader = async ({ request, params }) => {
 
     const customizerId = customizer.customizerId || null;
 
-    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
+    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions, pricings] = await Promise.all([
       getFonts(shopDomain, customizerId),
       getColors(shopDomain, customizerId),
       getSizes(shopDomain, customizerId),
@@ -60,6 +61,7 @@ export const loader = async ({ request, params }) => {
       getAcrylicShapes(shopDomain, customizerId),
       getBackboardColors(shopDomain, customizerId),
       getHangingOptions(shopDomain, customizerId),
+      getPricings(shopDomain, customizerId),
     ]);
 
     return {
@@ -74,6 +76,7 @@ export const loader = async ({ request, params }) => {
         backboardColors,
         hangingOptions,
       },
+      pricings,
     };
   } catch (error) {
     console.error('=== LOADER ERROR ===');
@@ -102,6 +105,7 @@ export const action = async ({ request, params }) => {
         await addFont(shop, {
           name: formData.get("name"),
           fontFamily: formData.get("fontFamily"),
+          pricingId: formData.get("pricingId") || null,
         }, customizerId);
         return { success: true };
       }
@@ -198,7 +202,7 @@ export const action = async ({ request, params }) => {
 
 export default function CustomizerSettings() {
   const loaderData = useLoaderData();
-  const { customizer, options } = loaderData;
+  const { customizer, options, pricings } = loaderData;
   const navigate = useNavigate();
   const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -225,7 +229,7 @@ export default function CustomizerSettings() {
   const renderSection = () => {
     switch (currentSection) {
       case "fonts":
-        return <FontSettings fonts={options.fonts} />;
+        return <FontSettings fonts={options.fonts} pricings={pricings} />;
       case "colors":
         return <ColorSettings colors={options.colors} />;
       case "sizes":
@@ -239,7 +243,7 @@ export default function CustomizerSettings() {
       case "hangingOptions":
         return <HangingOptionSettings hangingOptions={options.hangingOptions} />;
       default:
-        return <FontSettings fonts={options.fonts} />;
+        return <FontSettings fonts={options.fonts} pricings={pricings} />;
     }
   };
 

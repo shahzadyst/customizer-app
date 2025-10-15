@@ -1,4 +1,3 @@
-import { json } from "@react-router/node";
 import { useLoaderData, useNavigate } from "react-router";
 import { authenticate } from "../shopify.server";
 import { getPricings, deletePricing } from "../models/signage.server";
@@ -7,7 +6,7 @@ export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
   const pricings = await getPricings(session.shop);
 
-  return json({ pricings });
+  return { pricings };
 };
 
 export const action = async ({ request }) => {
@@ -20,7 +19,7 @@ export const action = async ({ request }) => {
     await deletePricing(session.shop, id);
   }
 
-  return json({ success: true });
+  return { success: true };
 };
 
 export default function PricingsPage() {
