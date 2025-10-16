@@ -55,61 +55,90 @@ export default function PricingSettings({ pricings, customizerId }) {
           </div>
         ) : (
           <div style={{ padding: '16px' }}>
-            {pricings.map((pricing) => (
-              <div
-                key={pricing._id.toString()}
-                onClick={() => navigate(`/app/pricing-settings/${pricing._id.toString()}`)}
-                style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  marginBottom: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  background: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#000';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e0e0e0';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: '8px' }}>
-                      {pricing.name}
+            {pricings.map((pricing) => {
+              const dbId = pricing._id ? pricing._id.toString() : '';
+
+              return (
+                <div
+                  key={pricing._id.toString()}
+                  onClick={() => navigate(`/app/pricing-settings/${dbId}`)}
+                  style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    marginBottom: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#000';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e0e0e0';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: '8px' }}>
+                        {pricing.name}
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '14px',
+                            color: '#666'
+                          }}
+                        >
+                          {pricing.letterPricingType === 'fixed' ? (
+                            <>
+                              <span>🔤</span>
+                              <span>Fixed Cost</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📏</span>
+                              <span>Material Cost</span>
+                            </>
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '14px',
+                            color: '#666'
+                          }}
+                        >
+                          <span>📦</span>
+                          <span>CM² Shipping</span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '14px',
+                            color: '#666'
+                          }}
+                        >
+                          <span>📐</span>
+                          <span>{pricing.sizeBoundaries?.length || 0} Size Boundaries</span>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#666' }}>
-                        {pricing.letterPricingType === 'fixed' ? (
-                          <>
-                            <span>🔤</span>
-                            <span>Fixed Cost</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>📏</span>
-                            <span>Material Cost</span>
-                          </>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#666' }}>
-                        <span>📦</span>
-                        <span>CM² Shipping</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#666' }}>
-                        <span>📐</span>
-                        <span>{pricing.sizeBoundaries?.length || 0} Size Boundaries</span>
-                      </div>
-                    </div>
+                    <div style={{ color: '#999', fontSize: '20px' }}>→</div>
                   </div>
-                  <div style={{ color: '#999', fontSize: '20px' }}>→</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </div>

@@ -93,59 +93,65 @@ export default function PricingsPage() {
               </tr>
             </thead>
             <tbody>
-              {pricings.map((pricing) => (
-                <tr
-                  key={pricing._id.toString()}
-                  style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}
-                  onClick={() => navigate(`/app/pricing-settings/${pricing._id.toString()}`)}
-                >
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ fontWeight: 500 }}>{pricing.name}</div>
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {pricing.letterPricingType === 'fixed' ? (
-                        <>
-                          <span style={{ fontSize: '18px' }}>🔤</span>
-                          <span>Fixed Cost</span>
-                        </>
-                      ) : (
-                        <>
-                          <span style={{ fontSize: '18px' }}>📏</span>
-                          <span>Material Cost</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '18px' }}>📦</span>
-                      <span>CM²</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                    <span style={{
-                      background: '#f0f0f0',
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: 500
-                    }}>
-                      {pricing.sizeBoundaries?.length || 0}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <s-button
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      ⋯
-                    </s-button>
-                  </td>
-                </tr>
-              ))}
+              {pricings.map((pricing) => {
+                const dbId1 = pricing._id?.toString?.() || '';
+                return (
+                  <tr
+                    key={pricing._id.toString()}
+                    style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}
+                    onClick={() => navigate(`/app/pricing-settings/${dbId1}`)}
+                  >
+                    <td style={{ padding: '16px 24px' }}>
+                      <div style={{ fontWeight: 500 }}>{pricing.name}</div>
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {pricing.letterPricingType === 'fixed' ? (
+                          <>
+                            <span style={{ fontSize: '18px' }}>🔤</span>
+                            <span>Fixed Cost</span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ fontSize: '18px' }}>📏</span>
+                            <span>Material Cost</span>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '18px' }}>📦</span>
+                        <span>CM²</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                      <span
+                        style={{
+                          background: '#f0f0f0',
+                          padding: '4px 12px',
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {pricing.sizeBoundaries?.length || 0}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                      <s-button
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        ⋯
+                      </s-button>
+                    </td>
+                  </tr>
+                );
+              })}
+
             </tbody>
           </table>
         )}

@@ -232,7 +232,10 @@ export async function getPricings(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const pricings = await db.collection(collections.pricings).find(query).toArray();
-  return pricings;
+  return pricings.map(pricing => ({
+    ...pricing,
+    _id: pricing._id.toString()
+  }));
 }
 
 export async function getPricing(shop, pricingId) {

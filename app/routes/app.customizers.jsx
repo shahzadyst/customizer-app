@@ -153,7 +153,6 @@ export default function Customizers() {
                     <s-stack direction="inline" gap="base" alignment="space-between">
                       <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => {
                         if (dbId) {
-                          console.log("Navigating to:", `/app/setting-customizers/${dbId}`);
                           navigate(`/app/setting-customizers/${dbId}`);
                         }
                       }}>
