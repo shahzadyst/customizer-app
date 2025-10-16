@@ -68,14 +68,16 @@ export const action = async ({ request, params }) => {
   return redirect("/app/pricings");
 };
 
-function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
+function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingType, shippingType }) {
   const [formData, setFormData] = useState(boundary || {
     maxWidth: "",
     maxHeight: "",
+    maxLength: "",
     pricePerLetter: "",
     signStartPrice: "",
     parcelCost: "",
-    pricePerCm2: ""
+    pricePerCm2: "",
+    pricePerCm3: ""
   });
 
   if (!isOpen) return null;
@@ -83,6 +85,36 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
   const handleSave = () => {
     onSave(formData);
     onClose();
+  };
+
+  const calculatePricePerCm2 = (parcelCost) => {
+    const width = 100;
+    const height = 80;
+    const area = width * height;
+    return (parseFloat(parcelCost) / area).toFixed(4);
+  };
+
+  const calculateParcelCost = (pricePerCm2) => {
+    const width = 100;
+    const height = 80;
+    const area = width * height;
+    return (parseFloat(pricePerCm2) * area).toFixed(2);
+  };
+
+  const handleParcelCostChange = (value) => {
+    setFormData({
+      ...formData,
+      parcelCost: value,
+      pricePerCm2: value ? calculatePricePerCm2(value) : ""
+    });
+  };
+
+  const handlePricePerCm2Change = (value) => {
+    setFormData({
+      ...formData,
+      pricePerCm2: value,
+      parcelCost: value ? calculateParcelCost(value) : ""
+    });
   };
 
   return (
@@ -113,7 +145,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
           alignItems: 'center',
           marginBottom: '24px'
         }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 600 }}>Size Boundary</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Size Boundary</h2>
           <button
             onClick={onClose}
             style={{
@@ -121,7 +153,8 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
               border: 'none',
               fontSize: '24px',
               cursor: 'pointer',
-              color: '#666'
+              color: '#666',
+              lineHeight: 1
             }}
           >
             ×
@@ -131,16 +164,16 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <span style={{ fontSize: '18px' }}>📐</span>
-            <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Size Boundary</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Size Boundary</h3>
           </div>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Defines the maximum width and height that this size boundary will apply to. Signs that exactly match these dimensions will use this boundary's pricing.{' '}
-            <a href="#" style={{ color: '#0066cc' }}>Learn more</a>
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+            Defines the maximum dimensions that this size boundary will apply to. Signs that match these dimensions will use this boundary's pricing.{' '}
+            <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: shippingType === 'volumetric' ? '1fr 1fr 1fr' : '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Maximum Width</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Width</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="number"
@@ -150,14 +183,18 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 />
                 <select
                   style={{
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 >
                   <option>cm</option>
@@ -166,7 +203,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Maximum Height</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Height</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="number"
@@ -176,14 +213,18 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 />
                 <select
                   style={{
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 >
                   <option>cm</option>
@@ -191,137 +232,193 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
                 </select>
               </div>
             </div>
+            {shippingType === 'volumetric' && (
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Length</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="number"
+                    value={formData.maxLength}
+                    onChange={(e) => setFormData({ ...formData, maxLength: e.target.value })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                  <select
+                    style={{
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  >
+                    <option>cm</option>
+                    <option>in</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <span style={{ fontSize: '18px' }}>💰</span>
-            <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Letter and Sign Pricings Inputs</h3>
-          </div>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Set the pricing inputs for this size boundary.
-          </p>
+        {letterPricingType === 'fixed' && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '18px' }}>💰</span>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Letter Pricing Inputs</h3>
+            </div>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+              Set the pricing inputs for this size boundary.
+            </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Price Per Letter</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.pricePerLetter}
-                  onChange={(e) => setFormData({ ...formData, pricePerLetter: e.target.value })}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                  Price Per Letter
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.pricePerLetter}
+                    onChange={(e) => setFormData({ ...formData, pricePerLetter: e.target.value })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+                <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                  Cost of each letter for this size boundary. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more</a>
+                </p>
               </div>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
-                Cost of each letter for this size boundary. <a href="#" style={{ color: '#0066cc' }}>Find out more</a>
-              </p>
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Sign Start Price - (Optional)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.signStartPrice}
-                  onChange={(e) => setFormData({ ...formData, signStartPrice: e.target.value })}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                />
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                  Sign Start Price <span style={{ fontWeight: 400, color: '#666' }}>(Optional)</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.signStartPrice}
+                    onChange={(e) => setFormData({ ...formData, signStartPrice: e.target.value })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+                <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                  Great for including additional costs (e.g. building cost).
+                </p>
               </div>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
-                Great for including additional costs (e.g. building cost).
-              </p>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <span style={{ fontSize: '18px' }}>📦</span>
-            <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Sign Dimension Price - (Shipping Unit Price)</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              Sign Dimension Price <span style={{ fontWeight: 400, color: '#666' }}>(Shipping Unit Price)</span>
+            </h3>
           </div>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Your shipping unit price is set to cm².
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '8px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+            Your shipping unit price is set to <strong>{shippingType === 'flat' ? 'cm²' : 'cm³'}</strong>.
           </p>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Enter one of two values below, 1. the parcel cost or 2. Price per cm², the other value will be calculated automatically.{' '}
-            <a href="#" style={{ color: '#0066cc' }}>Learn more</a>
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+            Enter one of two values below: 1. the parcel cost or 2. Price per {shippingType === 'flat' ? 'cm²' : 'cm³'}, the other value will be calculated automatically.{' '}
+            <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'end' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Parcel Cost</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                Parcel Cost
+              </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>$</span>
+                <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.parcelCost}
-                  onChange={(e) => setFormData({ ...formData, parcelCost: e.target.value })}
+                  onChange={(e) => handleParcelCostChange(e.target.value)}
                   style={{
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 />
               </div>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
-                Enter the cost of the parcel at 100cm wide x 80cm high. <a href="#" style={{ color: '#0066cc' }}>Learn more</a>
+              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                Enter the cost of the parcel at 100cm wide x 80cm high. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
               </p>
             </div>
-            <div style={{ fontSize: '20px', paddingBottom: '28px' }}>=</div>
+            <div style={{ fontSize: '20px', paddingBottom: '28px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#999' }}>=</div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Price per cm²</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                Price per {shippingType === 'flat' ? 'cm²' : 'cm³'}
+              </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>$</span>
+                <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
                 <input
                   type="number"
                   step="0.0001"
                   value={formData.pricePerCm2}
-                  onChange={(e) => setFormData({ ...formData, pricePerCm2: e.target.value })}
+                  onChange={(e) => handlePricePerCm2Change(e.target.value)}
                   style={{
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
-                    borderRadius: '4px'
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 />
-                <span>cm²</span>
+                <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>{shippingType === 'flat' ? 'cm²' : 'cm³'}</span>
               </div>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
-                This value is used to calculate shipping cost based on the sign's final area.
+              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                This value is used to calculate shipping cost based on the sign's final {shippingType === 'flat' ? 'area' : 'volume'}.
               </p>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
           <button
             onClick={onClose}
             style={{
               padding: '10px 20px',
               background: 'white',
               border: '1px solid #ddd',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 500
+              fontWeight: 500,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              transition: 'all 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
           >
             Cancel
           </button>
@@ -332,13 +429,17 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary }) {
               background: '#000',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 500
+              fontWeight: 500,
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              transition: 'all 0.2s'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#000'}
           >
-            Done
+            Save
           </button>
         </div>
       </div>
@@ -407,7 +508,7 @@ export default function PricingEditPage() {
         >
           ← Back to Pricings
         </button>
-        <h1 style={{ fontSize: '24px', fontWeight: 600 }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
           {isNew ? 'Add New Pricing' : 'Edit Pricing'}
         </h1>
       </div>
@@ -420,16 +521,16 @@ export default function PricingEditPage() {
             borderRadius: '8px',
             padding: '24px'
           }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               Advanced Letter Price Settings
             </h2>
-            <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
               A flexible system that allows you to mix and match different calculations to create a pricing model that works for you.{' '}
-              <a href="#" style={{ color: '#0066cc' }}>Find out more.</a>
+              <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more.</a>
             </p>
 
             <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Label *
               </label>
               <input
@@ -441,18 +542,19 @@ export default function PricingEditPage() {
                   width: '100%',
                   padding: '10px 12px',
                   border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '14px'
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
                 }}
               />
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+              <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
                 The label is not shown to the customer.
               </p>
             </div>
 
             <div style={{ marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Letter Pricing</h3>
-              <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Letter Pricing</h3>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
                 Choose how the letter portion of signs price is calculated.
               </p>
 
@@ -466,8 +568,8 @@ export default function PricingEditPage() {
                   style={{ marginTop: '3px' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500, marginBottom: '4px' }}>Fixed Cost Per Letter</div>
-                  <div style={{ color: '#666', fontSize: '13px' }}>e.g. 5 per letter</div>
+                  <div style={{ fontWeight: 500, marginBottom: '4px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Fixed Cost Per Letter</div>
+                  <div style={{ color: '#666', fontSize: '13px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>e.g. $5 per letter</div>
                 </div>
               </label>
 
@@ -481,22 +583,22 @@ export default function PricingEditPage() {
                   style={{ marginTop: '3px' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 500, marginBottom: '4px' }}>Letter Material Cost</div>
-                  <div style={{ color: '#666', fontSize: '13px', marginBottom: '4px' }}>
+                  <div style={{ fontWeight: 500, marginBottom: '4px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Letter Material Cost</div>
+                  <div style={{ color: '#666', fontSize: '13px', marginBottom: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
                     Accurately trace the midline path of each letter that is part of the sign and use that total length as the material length.
                   </div>
-                  <div style={{ fontSize: '13px' }}>
-                    <strong>Formula:</strong> Material Length x Material Price <a href="#" style={{ color: '#0066cc' }}>Find out more</a>
+                  <div style={{ fontSize: '13px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                    <strong>Formula:</strong> Material Length x Material Price <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more</a>
                   </div>
                 </div>
               </label>
             </div>
 
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
-                Sign Dimension Pricing - (Shipping Unit Pricing)
+              <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                Sign Dimension Pricing <span style={{ fontWeight: 400, color: '#666' }}>(Shipping Unit Pricing)</span>
               </h3>
-              <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
                 Choose how to price the signs dimensions - is primarily used for shipping price. This is an additional calculation that is applied to the final price of this sign.
               </p>
 
@@ -512,10 +614,10 @@ export default function PricingEditPage() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '16px' }}>📦</span>
-                    <span style={{ fontWeight: 500 }}>CM² - Flat Parcel</span>
+                    <span style={{ fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>CM² - Flat Parcel</span>
                   </div>
-                  <div style={{ fontSize: '13px' }}>
-                    <strong>Formula:</strong> ((Width x Height) x Unit Price) <a href="#" style={{ color: '#0066cc' }}>Learn More</a>
+                  <div style={{ fontSize: '13px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                    <strong>Formula:</strong> ((Width x Height) x Unit Price) <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn More</a>
                   </div>
                 </div>
               </label>
@@ -532,10 +634,10 @@ export default function PricingEditPage() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '16px' }}>📦</span>
-                    <span style={{ fontWeight: 500 }}>CM³ - Volumetric Parcel</span>
+                    <span style={{ fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>CM³ - Volumetric Parcel</span>
                   </div>
-                  <div style={{ fontSize: '13px' }}>
-                    <strong>Formula:</strong> ((Width x Height x Length) / Volume) * Unit Price <a href="#" style={{ color: '#0066cc' }}>Learn More</a>
+                  <div style={{ fontSize: '13px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                    <strong>Formula:</strong> ((Width x Height x Length) / Volume) * Unit Price <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn More</a>
                   </div>
                 </div>
               </label>
@@ -548,10 +650,10 @@ export default function PricingEditPage() {
             borderRadius: '8px',
             padding: '24px'
           }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>Size Boundaries</h2>
-            <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Size Boundaries</h2>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
               Add size boundaries to determine which pricing tier applies to a sign dimension. The pricing inputs you can control are determined by the chosen formulas above.{' '}
-              <a href="#" style={{ color: '#0066cc' }}>Find out more</a>
+              <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more</a>
             </p>
 
             <div style={{ marginBottom: '16px', color: '#666', fontSize: '14px' }}>
@@ -702,6 +804,8 @@ export default function PricingEditPage() {
         onClose={() => setShowBoundaryModal(false)}
         onSave={handleSaveBoundary}
         boundary={editingBoundaryIndex !== null ? formData.sizeBoundaries[editingBoundaryIndex] : null}
+        letterPricingType={formData.letterPricingType}
+        shippingType={formData.shippingType}
       />
     </div>
   );
