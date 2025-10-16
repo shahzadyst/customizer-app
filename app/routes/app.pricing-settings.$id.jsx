@@ -6,6 +6,8 @@ import { getPricing, addPricing, updatePricing, deletePricing, getFontsUsingPric
 export const loader = async ({ request, params }) => {
   const { session } = await authenticate.admin(request);
   const { id } = params;
+  const url = new URL(request.url);
+  const customizerId = url.searchParams.get("customizerId");
 
   if (id === "new") {
     return {
@@ -16,7 +18,8 @@ export const loader = async ({ request, params }) => {
         shippingType: "flat",
         sizeBoundaries: []
       },
-      isNew: true
+      isNew: true,
+      customizerId
     };
   }
 
@@ -26,7 +29,7 @@ export const loader = async ({ request, params }) => {
     throw new Response("Pricing not found", { status: 404 });
   }
 
-  return { pricing, isNew: false };
+  return { pricing, isNew: false, customizerId };
 };
 
 export const action = async ({ request, params }) => {
@@ -40,8 +43,14 @@ export const action = async ({ request, params }) => {
     return Response.json({ fonts: fontsUsingPricing });
   }
 
+  const url = new URL(request.url);
+  const customizerId = url.searchParams.get("customizerId");
+
   if (action === "delete") {
     await deletePricing(session.shop, id);
+    if (customizerId) {
+      return redirect(`/app/setting-customizers/${customizerId}?section=pricings`);
+    }
     return redirect("/app/pricings");
   }
 
@@ -52,7 +61,11 @@ export const action = async ({ request, params }) => {
       name: `${pricing.name} (Copy)`,
     };
     delete newPricing._id;
-    await addPricing(session.shop, newPricing);
+    delete newPricing.updatedAt;
+    await addPricing(session.shop, newPricing, pricing.customizerId);
+    if (customizerId) {
+      return redirect(`/app/setting-customizers/${customizerId}?section=pricings`);
+    }
     return redirect("/app/pricings");
   }
 
@@ -64,10 +77,17 @@ export const action = async ({ request, params }) => {
     sizeBoundaries: JSON.parse(formData.get("sizeBoundaries") || "[]"),
   };
 
+  const formCustomizerId = formData.get("customizerId");
+
   if (id === "new") {
-    await addPricing(session.shop, pricingData);
+    await addPricing(session.shop, pricingData, formCustomizerId || customizerId);
   } else {
     await updatePricing(session.shop, id, pricingData);
+  }
+
+  const redirectCustomizerId = formCustomizerId || customizerId;
+  if (redirectCustomizerId) {
+    return redirect(`/app/setting-customizers/${redirectCustomizerId}?section=pricings`);
   }
 
   return redirect("/app/pricings");
@@ -632,7 +652,7 @@ function DeletePricingModal({ isOpen, onClose, fonts, onConfirmDelete, onGoToFon
 }
 
 export default function PricingEditPage() {
-  const { pricing, isNew } = useLoaderData();
+  const { pricing, isNew, customizerId } = useLoaderData();
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const [formData, setFormData] = useState(pricing);
@@ -709,18 +729,19 @@ export default function PricingEditPage() {
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
         <button
-          onClick={() => navigate('/app/pricings')}
+          onClick={() => navigate(customizerId ? `/app/setting-customizers/${customizerId}?section=pricings` : '/app/pricings')}
           style={{
             background: 'none',
             border: 'none',
             color: '#0066cc',
             cursor: 'pointer',
             fontSize: '14px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
             padding: '0',
             marginBottom: '16px'
           }}
         >
-          ← Back to Pricings
+          ← Back to {customizerId ? 'Customizer Settings' : 'Pricings'}
         </button>
         <h1 style={{ fontSize: '24px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
           {isNew ? 'Add New Pricing' : 'Edit Pricing'}
@@ -728,6 +749,7 @@ export default function PricingEditPage() {
       </div>
 
       <fetcher.Form method="post" onSubmit={handleSubmit}>
+        {customizerId && <input type="hidden" name="customizerId" value={customizerId} />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{
             background: 'white',
