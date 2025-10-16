@@ -29,7 +29,7 @@ export default function PricingSettings({ pricings, customizerId }) {
         }}>
           <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Available Pricings</h3>
           <button
-            onClick={() => navigate('/app/pricing-settings/new')}
+            onClick={() => navigate(`/app/pricing-settings/new?customizerId=${customizerId}`)}
             style={{
               padding: '8px 16px',
               background: '#000',
@@ -38,7 +38,8 @@ export default function PricingSettings({ pricings, customizerId }) {
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 500
+              fontWeight: 500,
+              fontFamily: 'system-ui, -apple-system, sans-serif'
             }}
           >
             Add Pricing
@@ -58,7 +59,7 @@ export default function PricingSettings({ pricings, customizerId }) {
             {pricings.map((pricing) => (
               <div
                 key={pricing._id.toString()}
-                onClick={() => navigate(`/app/pricing-settings/${pricing._id.toString()}`)}
+                onClick={() => navigate(`/app/pricing-settings/${pricing._id.toString()}?customizerId=${customizerId}`)}
                 style={{
                   border: '1px solid #e0e0e0',
                   borderRadius: '8px',
