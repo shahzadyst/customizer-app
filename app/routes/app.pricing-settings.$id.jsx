@@ -79,6 +79,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
     maxHeight: "",
     maxLength: "",
     pricePerLetter: "",
+    materialPrice: "",
     signStartPrice: "",
     parcelCost: "",
     pricePerCm2: "",
@@ -306,6 +307,72 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                 </div>
                 <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
                   Cost of each letter for this size boundary. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more</a>
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                  Sign Start Price <span style={{ fontWeight: 400, color: '#666' }}>(Optional)</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.signStartPrice}
+                    onChange={(e) => setFormData({ ...formData, signStartPrice: e.target.value })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                </div>
+                <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                  Great for including additional costs (e.g. building cost).
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {letterPricingType === 'material' && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '18px' }}>💰</span>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Letter Material Cost Inputs</h3>
+            </div>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+              Set the material pricing inputs for this size boundary.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                  Material Price
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.materialPrice}
+                    onChange={(e) => setFormData({ ...formData, materialPrice: e.target.value })}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                    }}
+                  />
+                  <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>/cm</span>
+                </div>
+                <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
+                  Cost per centimeter of material used. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Find out more</a>
                 </p>
               </div>
               <div>
