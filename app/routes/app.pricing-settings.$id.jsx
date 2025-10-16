@@ -9,6 +9,10 @@ export const loader = async ({ request, params }) => {
   const url = new URL(request.url);
   const customizerId = url.searchParams.get("customizerId");
 
+  if (!customizerId && id === "new") {
+    return redirect("/app/customizers");
+  }
+
   if (id === "new") {
     return {
       pricing: {
@@ -29,7 +33,13 @@ export const loader = async ({ request, params }) => {
     throw new Response("Pricing not found", { status: 404 });
   }
 
-  return { pricing, isNew: false, customizerId };
+  const effectiveCustomizerId = customizerId || pricing.customizerId;
+
+  if (!effectiveCustomizerId) {
+    return redirect("/app/customizers");
+  }
+
+  return { pricing, isNew: false, customizerId: effectiveCustomizerId };
 };
 
 export const action = async ({ request, params }) => {
@@ -47,11 +57,10 @@ export const action = async ({ request, params }) => {
   const customizerId = url.searchParams.get("customizerId");
 
   if (action === "delete") {
+    const pricing = await getPricing(session.shop, id);
     await deletePricing(session.shop, id);
-    if (customizerId) {
-      return redirect(`/app/setting-customizers/${customizerId}?section=pricings`);
-    }
-    return redirect("/app/pricings");
+    const effectiveCustomizerId = customizerId || pricing?.customizerId;
+    return redirect(`/app/setting-customizers/${effectiveCustomizerId}?section=pricings`);
   }
 
   if (action === "duplicate") {
@@ -63,10 +72,8 @@ export const action = async ({ request, params }) => {
     delete newPricing._id;
     delete newPricing.updatedAt;
     await addPricing(session.shop, newPricing, pricing.customizerId);
-    if (customizerId) {
-      return redirect(`/app/setting-customizers/${customizerId}?section=pricings`);
-    }
-    return redirect("/app/pricings");
+    const effectiveCustomizerId = customizerId || pricing.customizerId;
+    return redirect(`/app/setting-customizers/${effectiveCustomizerId}?section=pricings`);
   }
 
   const pricingData = {
@@ -78,19 +85,15 @@ export const action = async ({ request, params }) => {
   };
 
   const formCustomizerId = formData.get("customizerId");
+  const effectiveCustomizerId = formCustomizerId || customizerId;
 
   if (id === "new") {
-    await addPricing(session.shop, pricingData, formCustomizerId || customizerId);
+    await addPricing(session.shop, pricingData, effectiveCustomizerId);
   } else {
     await updatePricing(session.shop, id, pricingData);
   }
 
-  const redirectCustomizerId = formCustomizerId || customizerId;
-  if (redirectCustomizerId) {
-    return redirect(`/app/setting-customizers/${redirectCustomizerId}?section=pricings`);
-  }
-
-  return redirect("/app/pricings");
+  return redirect(`/app/setting-customizers/${effectiveCustomizerId}?section=pricings`);
 };
 
 function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingType, shippingType }) {
@@ -729,7 +732,7 @@ export default function PricingEditPage() {
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
         <button
-          onClick={() => navigate(customizerId ? `/app/setting-customizers/${customizerId}?section=pricings` : '/app/pricings')}
+          onClick={() => navigate(`/app/setting-customizers/${customizerId}?section=pricings`)}
           style={{
             background: 'none',
             border: 'none',
@@ -741,7 +744,7 @@ export default function PricingEditPage() {
             marginBottom: '16px'
           }}
         >
-          ← Back to {customizerId ? 'Customizer Settings' : 'Pricings'}
+          ← Back to Customizer Settings
         </button>
         <h1 style={{ fontSize: '24px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
           {isNew ? 'Add New Pricing' : 'Edit Pricing'}
