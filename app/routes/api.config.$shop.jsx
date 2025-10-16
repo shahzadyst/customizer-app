@@ -6,29 +6,51 @@ import {
   getAcrylicShapes,
   getBackboardColors,
   getHangingOptions,
+  getPricings,
 } from "../models/signage.server";
+import { getActiveCustomizers } from "../models/customizer.server";
 
-export const loader = async ({ params }) => {
+export const loader = async ({ params, request }) => {
   const { shop } = params;
+  const url = new URL(request.url);
+  const customizerId = url.searchParams.get("customizerId");
 
   if (!shop) {
     return Response.json({ error: "Shop parameter is required" }, { status: 400 });
   }
 
   try {
-    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions] = await Promise.all([
-      getFonts(shop),
-      getColors(shop),
-      getSizes(shop),
-      getUsageTypes(shop),
-      getAcrylicShapes(shop),
-      getBackboardColors(shop),
-      getHangingOptions(shop),
+    let targetCustomizerId = customizerId;
+
+    if (!targetCustomizerId) {
+      const customizers = await getActiveCustomizers(shop);
+      if (customizers && customizers.length > 0) {
+        targetCustomizerId = customizers[0]._id.toString();
+      }
+    }
+
+    if (!targetCustomizerId) {
+      return Response.json({
+        success: false,
+        error: "No active customizer found"
+      }, { status: 404 });
+    }
+
+    const [fonts, colors, sizes, usageTypes, acrylicShapes, backboardColors, hangingOptions, pricings] = await Promise.all([
+      getFonts(shop, targetCustomizerId),
+      getColors(shop, targetCustomizerId),
+      getSizes(shop, targetCustomizerId),
+      getUsageTypes(shop, targetCustomizerId),
+      getAcrylicShapes(shop, targetCustomizerId),
+      getBackboardColors(shop, targetCustomizerId),
+      getHangingOptions(shop, targetCustomizerId),
+      getPricings(shop, targetCustomizerId),
     ]);
 
     return Response.json({
       success: true,
       config: {
+        customizerId: targetCustomizerId,
         fonts: fonts.filter(f => f.isActive !== false),
         colors: colors.filter(c => c.isActive !== false),
         sizes: sizes.filter(s => s.isActive !== false),
@@ -36,6 +58,7 @@ export const loader = async ({ params }) => {
         acrylicShapes: acrylicShapes.filter(a => a.isActive !== false),
         backboardColors: backboardColors.filter(b => b.isActive !== false),
         hangingOptions: hangingOptions.filter(h => h.isActive !== false),
+        pricings: pricings.filter(p => p.isActive !== false),
       },
     }, {
       headers: {

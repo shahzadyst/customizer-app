@@ -9,6 +9,18 @@ export async function getCustomizers(shop) {
   }));
 }
 
+export async function getActiveCustomizers(shop) {
+  const db = await getDb();
+  const customizers = await db.collection(collections.customizers).find({
+    shop,
+    isActive: true
+  }).sort({ createdAt: -1 }).toArray();
+  return customizers.map(customizer => ({
+    ...customizer,
+    _id: customizer._id.toString()
+  }));
+}
+
 export async function getCustomizer(shop, identifier) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
