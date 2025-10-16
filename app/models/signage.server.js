@@ -266,6 +266,15 @@ export async function updatePricing(shop, pricingId, pricingData) {
   return result;
 }
 
+export async function getFontsUsingPricing(shop, pricingId) {
+  const db = await getDb();
+  const fonts = await db.collection(collections.fonts).find({
+    shop,
+    pricingId: pricingId,
+  }).toArray();
+  return fonts;
+}
+
 export async function deletePricing(shop, pricingId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');

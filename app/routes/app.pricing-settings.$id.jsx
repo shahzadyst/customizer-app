@@ -1,7 +1,7 @@
 import { redirect, useLoaderData, useNavigate, useFetcher } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authenticate } from "../shopify.server";
-import { getPricing, addPricing, updatePricing, deletePricing } from "../models/signage.server";
+import { getPricing, addPricing, updatePricing, deletePricing, getFontsUsingPricing } from "../models/signage.server";
 
 export const loader = async ({ request, params }) => {
   const { session } = await authenticate.admin(request);
@@ -34,6 +34,11 @@ export const action = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get("action");
   const { id } = params;
+
+  if (action === "checkDelete") {
+    const fontsUsingPricing = await getFontsUsingPricing(session.shop, id);
+    return Response.json({ fonts: fontsUsingPricing });
+  }
 
   if (action === "delete") {
     await deletePricing(session.shop, id);
@@ -447,6 +452,118 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
   );
 }
 
+function DeletePricingModal({ isOpen, onClose, fonts, onConfirmDelete, onGoToFonts }) {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '500px',
+        maxHeight: '80vh',
+        overflow: 'auto',
+        padding: '24px'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            Remove Fonts Before Deleting Pricing
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: '#666',
+              lineHeight: 1
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.5 }}>
+          The following fonts will need to be updated with a different pricing before you can delete.
+        </p>
+
+        <div style={{
+          maxHeight: '300px',
+          overflowY: 'auto',
+          marginBottom: '20px',
+          padding: '12px',
+          background: '#f9f9f9',
+          borderRadius: '6px',
+          border: '1px solid #e0e0e0'
+        }}>
+          {fonts.map((font, index) => (
+            <div key={index} style={{
+              padding: '8px 0',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '14px',
+              borderBottom: index < fonts.length - 1 ? '1px solid #e0e0e0' : 'none'
+            }}>
+              {font.name}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+          <button
+            onClick={onGoToFonts}
+            style={{
+              padding: '10px 20px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
+            Go to Fonts
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: '#d32f2f',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PricingEditPage() {
   const { pricing, isNew } = useLoaderData();
   const navigate = useNavigate();
@@ -454,6 +571,8 @@ export default function PricingEditPage() {
   const [formData, setFormData] = useState(pricing);
   const [showBoundaryModal, setShowBoundaryModal] = useState(false);
   const [editingBoundaryIndex, setEditingBoundaryIndex] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [fontsUsingPricing, setFontsUsingPricing] = useState([]);
 
   const handleAddBoundary = () => {
     setEditingBoundaryIndex(null);
@@ -480,6 +599,23 @@ export default function PricingEditPage() {
     setFormData({ ...formData, sizeBoundaries: newBoundaries });
   };
 
+  const handleDeleteClick = async () => {
+    const checkFormData = new FormData();
+    checkFormData.append("action", "checkDelete");
+
+    fetcher.submit(checkFormData, { method: "post" });
+  };
+
+  const handleConfirmDelete = () => {
+    const deleteFormData = new FormData();
+    deleteFormData.append("action", "delete");
+    fetcher.submit(deleteFormData, { method: "post" });
+  };
+
+  const handleGoToFonts = () => {
+    navigate('/app/settings?section=fonts');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const submitFormData = new FormData();
@@ -490,6 +626,17 @@ export default function PricingEditPage() {
     submitFormData.append("sizeBoundaries", JSON.stringify(formData.sizeBoundaries));
     fetcher.submit(submitFormData, { method: "post" });
   };
+
+  useEffect(() => {
+    if (fetcher.data?.fonts) {
+      if (fetcher.data.fonts.length > 0) {
+        setFontsUsingPricing(fetcher.data.fonts);
+        setShowDeleteModal(true);
+      } else if (fetcher.data.fonts.length === 0) {
+        handleConfirmDelete();
+      }
+    }
+  }, [fetcher.data]);
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -743,25 +890,21 @@ export default function PricingEditPage() {
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    const confirmDelete = window.confirm('Are you sure you want to delete this pricing?');
-                    if (confirmDelete) {
-                      fetcher.submit({ action: 'delete' }, { method: 'post' });
-                    }
-                  }}
+                  onClick={handleDeleteClick}
                   style={{
                     padding: '10px 20px',
                     background: 'white',
                     color: '#d32f2f',
                     border: '1px solid #d32f2f',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: 500,
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
                     marginRight: 'auto'
                   }}
                 >
-                  Delete
+                  Delete Pricing
                 </button>
                 <button
                   type="button"
@@ -806,6 +949,14 @@ export default function PricingEditPage() {
         boundary={editingBoundaryIndex !== null ? formData.sizeBoundaries[editingBoundaryIndex] : null}
         letterPricingType={formData.letterPricingType}
         shippingType={formData.shippingType}
+      />
+
+      <DeletePricingModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        fonts={fontsUsingPricing}
+        onConfirmDelete={handleConfirmDelete}
+        onGoToFonts={handleGoToFonts}
       />
     </div>
   );
