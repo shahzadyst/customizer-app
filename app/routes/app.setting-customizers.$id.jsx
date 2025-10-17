@@ -107,6 +107,8 @@ export const action = async ({ request, params }) => {
           name: formData.get("name"),
           fontFamily: formData.get("fontFamily"),
           pricingId: formData.get("pricingId") || null,
+          minHeightSmallest: formData.get("minHeightSmallest") ? parseFloat(formData.get("minHeightSmallest")) : null,
+          minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
         }, customizerId);
         return { success: true };
       }
@@ -131,8 +133,8 @@ export const action = async ({ request, params }) => {
 
       case "addSize": {
         await addSize(shop, {
-          width: parseFloat(formData.get("width")),
-          height: parseFloat(formData.get("height")),
+          label: formData.get("label"),
+          multiplier: parseFloat(formData.get("multiplier")),
         }, customizerId);
         return { success: true };
       }

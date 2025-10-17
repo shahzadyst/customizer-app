@@ -137,7 +137,24 @@ export default function SizeSettings({ sizes }) {
                     <fetcher.Form method="post" style={{ display: 'inline' }}>
                       <input type="hidden" name="action" value="deleteSize" />
                       <input type="hidden" name="id" value={size._id.toString()} />
-                      <s-button size="small" variant="destructive" type="submit">Delete</s-button>
+                      <button
+                        type="submit"
+                        style={{
+                          padding: '6px 12px',
+                          background: '#d32f2f',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          fontFamily: 'system-ui, -apple-system, sans-serif'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                      >
+                        Delete
+                      </button>
                     </fetcher.Form>
                   </td>
                 </tr>
