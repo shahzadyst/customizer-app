@@ -96,8 +96,8 @@ export const action = async ({ request, params }) => {
   return redirect(`/app/setting-customizers/${effectiveCustomizerId}?section=pricings`);
 };
 
-function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingType, shippingType }) {
-  const [formData, setFormData] = useState(boundary || {
+function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingType, shippingType, existingBoundaries = [] }) {
+  const [formData, setFormData] = useState({
     maxWidth: "",
     maxHeight: "",
     maxLength: "",
@@ -108,24 +108,92 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
     pricePerCm2: "",
     pricePerCm3: ""
   });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (boundary) {
+      setFormData(boundary);
+    } else {
+      setFormData({
+        maxWidth: "",
+        maxHeight: "",
+        maxLength: "",
+        pricePerLetter: "",
+        materialPrice: "",
+        signStartPrice: "",
+        parcelCost: "",
+        pricePerCm2: "",
+        pricePerCm3: ""
+      });
+    }
+  }, [boundary, isOpen]);
 
   if (!isOpen) return null;
 
+  const validateBoundary = () => {
+    const newErrors = {};
+
+    if (!formData.maxWidth || parseFloat(formData.maxWidth) <= 0) {
+      newErrors.maxWidth = "Width is required";
+    }
+
+    if (formData.maxWidth && (!formData.maxHeight || parseFloat(formData.maxHeight) <= 0)) {
+      newErrors.maxHeight = "Height is mandatory after entering width";
+    }
+
+    if (formData.maxWidth && formData.maxHeight) {
+      const lastBoundary = existingBoundaries[existingBoundaries.length - 1];
+      if (lastBoundary && !boundary) {
+        const widthDiff = parseFloat(formData.maxWidth) - parseFloat(lastBoundary.maxWidth);
+        const heightDiff = parseFloat(formData.maxHeight) - parseFloat(lastBoundary.maxHeight);
+
+        if (widthDiff < 40 || heightDiff < 40) {
+          newErrors.boundaryGap = "New boundary must be at least 40 units greater than the previous boundary";
+        }
+
+        if (parseFloat(formData.maxWidth) <= parseFloat(lastBoundary.maxWidth)) {
+          newErrors.maxWidth = "Width must be greater than previous boundary";
+        }
+
+        if (parseFloat(formData.maxHeight) <= parseFloat(lastBoundary.maxHeight)) {
+          newErrors.maxHeight = "Height must be greater than previous boundary";
+        }
+      }
+    }
+
+    if (shippingType === 'volumetric' && formData.maxWidth && formData.maxHeight) {
+      if (!formData.maxLength || parseFloat(formData.maxLength) <= 0) {
+        newErrors.maxLength = "Length is required for volumetric shipping";
+      }
+    }
+
+    return newErrors;
+  };
+
   const handleSave = () => {
+    const validationErrors = validateBoundary();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setErrors({});
     onSave(formData);
     onClose();
   };
 
   const calculatePricePerCm2 = (parcelCost) => {
-    const width = formData.maxWidth;
-    const height = formData.maxHeight;
+    const width = parseFloat(formData.maxWidth);
+    const height = parseFloat(formData.maxHeight);
+    if (!width || !height || width <= 0 || height <= 0) return "";
     const area = width * height;
     return (parseFloat(parcelCost) / area).toFixed(4);
   };
 
   const calculateParcelCost = (pricePerCm2) => {
-    const width = formData.maxWidth;
-    const height = formData.maxHeight;
+    const width = parseFloat(formData.maxWidth);
+    const height = parseFloat(formData.maxHeight);
+    if (!width || !height || width <= 0 || height <= 0) return "";
     const area = width * height;
     return (parseFloat(pricePerCm2) * area).toFixed(2);
   };
@@ -200,9 +268,22 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
             <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
           </p>
 
+          {errors.boundaryGap && (
+            <div style={{
+              padding: '12px',
+              background: '#ffd6d6',
+              color: '#c41e3a',
+              borderRadius: '6px',
+              fontSize: '14px',
+              marginBottom: '16px'
+            }}>
+              {errors.boundaryGap}
+            </div>
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: shippingType === 'volumetric' ? '1fr 1fr 1fr' : '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Width</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Width *</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="number"
@@ -211,7 +292,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    border: '1px solid #ddd',
+                    border: '1px solid ' + (errors.maxWidth ? '#d32f2f' : '#ddd'),
                     borderRadius: '6px',
                     fontSize: '14px',
                     fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -229,9 +310,14 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   <option>cm</option>
                 </select>
               </div>
+              {errors.maxWidth && (
+                <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.maxWidth}
+                </div>
+              )}
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Height</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>Maximum Height *</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="number"
@@ -240,7 +326,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    border: '1px solid #ddd',
+                    border: '1px solid ' + (errors.maxHeight ? '#d32f2f' : '#ddd'),
                     borderRadius: '6px',
                     fontSize: '14px',
                     fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -258,6 +344,11 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   <option>cm</option>
                 </select>
               </div>
+              {errors.maxHeight && (
+                <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.maxHeight}
+                </div>
+              )}
             </div>
             {shippingType === 'volumetric' && (
               <div>
@@ -439,7 +530,20 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
             <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'end' }}>
+          {(!formData.maxWidth || !formData.maxHeight) && (
+            <div style={{
+              padding: '12px',
+              background: '#fff4d6',
+              color: '#916a00',
+              borderRadius: '6px',
+              fontSize: '14px',
+              marginBottom: '16px'
+            }}>
+              Please enter both width and height to enable shipping price calculations.
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'end', opacity: (!formData.maxWidth || !formData.maxHeight) ? 0.5 : 1 }}>
             <div className="parcelcostDiv">
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Parcel Cost
@@ -451,18 +555,21 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   step="0.01"
                   value={formData.parcelCost}
                   onChange={(e) => handleParcelCostChange(e.target.value)}
+                  disabled={!formData.maxWidth || !formData.maxHeight}
                   style={{
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    background: (!formData.maxWidth || !formData.maxHeight) ? '#f5f5f5' : 'white',
+                    cursor: (!formData.maxWidth || !formData.maxHeight) ? 'not-allowed' : 'text'
                   }}
                 />
               </div>
               <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
-                Enter the cost of the parcel at {formData.maxWidth}cm wide x {formData.maxHeight}cm high. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
+                Enter the cost of the parcel at {formData.maxWidth || '?'}cm wide x {formData.maxHeight || '?'}cm high. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
               </p>
             </div>
             <div style={{ fontSize: '20px', paddingBottom: '28px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#999' }}>=</div>
@@ -477,13 +584,16 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   step="0.0001"
                   value={formData.pricePerCm2}
                   onChange={(e) => handlePricePerCm2Change(e.target.value)}
+                  disabled={!formData.maxWidth || !formData.maxHeight}
                   style={{
                     flex: 1,
                     padding: '8px 12px',
                     border: '1px solid #ddd',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    background: (!formData.maxWidth || !formData.maxHeight) ? '#f5f5f5' : 'white',
+                    cursor: (!formData.maxWidth || !formData.maxHeight) ? 'not-allowed' : 'text'
                   }}
                 />
                 <span style={{ fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#666' }}>{shippingType === 'flat' ? 'cm²' : 'cm³'}</span>
@@ -1038,6 +1148,7 @@ export default function PricingEditPage() {
         boundary={editingBoundaryIndex !== null ? formData.sizeBoundaries[editingBoundaryIndex] : null}
         letterPricingType={formData.letterPricingType}
         shippingType={formData.shippingType}
+        existingBoundaries={formData.sizeBoundaries}
       />
 
       <DeletePricingModal

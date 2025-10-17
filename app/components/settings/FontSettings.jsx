@@ -18,7 +18,13 @@ export default function FontSettings({ fonts, pricings = [] }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showGoogleFontsModal, setShowGoogleFontsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newFont, setNewFont] = useState({ name: "", fontFamily: "", pricingId: "" });
+  const [newFont, setNewFont] = useState({
+    name: "",
+    fontFamily: "",
+    pricingId: "",
+    minHeightSmallest: "",
+    minHeightUppercase: ""
+  });
   const [errors, setErrors] = useState({});
   const [loadedFonts, setLoadedFonts] = useState(new Set());
 
@@ -45,7 +51,11 @@ export default function FontSettings({ fonts, pricings = [] }) {
 
   const handleSelectGoogleFont = (fontFamily) => {
     loadGoogleFont(fontFamily);
-    setNewFont({ name: fontFamily, fontFamily: `'${fontFamily}', sans-serif`, pricingId: newFont.pricingId });
+    setNewFont({
+      ...newFont,
+      name: fontFamily,
+      fontFamily: `'${fontFamily}', sans-serif`
+    });
     setShowGoogleFontsModal(false);
   };
 
@@ -57,7 +67,13 @@ export default function FontSettings({ fonts, pricings = [] }) {
       return;
     }
     setErrors({});
-    setNewFont({ name: "", fontFamily: "", pricingId: "" });
+    setNewFont({
+      name: "",
+      fontFamily: "",
+      pricingId: "",
+      minHeightSmallest: "",
+      minHeightUppercase: ""
+    });
     setShowAddForm(false);
   };
 
@@ -226,6 +242,76 @@ export default function FontSettings({ fonts, pricings = [] }) {
                 </select>
                 <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
                   Optionally assign a pricing configuration to this font for advanced pricing rules.
+                </div>
+              </div>
+
+              <div style={{
+                padding: '16px',
+                background: '#f6f6f7',
+                borderRadius: '8px',
+                marginTop: '8px'
+              }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Minimum height of font letters</h3>
+                <p style={{ color: '#666', fontSize: '13px', marginBottom: '16px' }}>
+                  The minimum heights values set here will be used as the minimum heights for the sign size.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                      Minimum Height of Smallest Letter *
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={newFont.minHeightSmallest}
+                        onChange={(e) => setNewFont({ ...newFont, minHeightSmallest: e.target.value })}
+                        name="minHeightSmallest"
+                        placeholder="4.2"
+                        required
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px'
+                        }}
+                      />
+                      <span style={{ fontSize: '14px', color: '#666' }}>cm</span>
+                    </div>
+                    <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                      The minimum height of the smallest letter in centimeters.
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                      Minimum Height of Uppercase Letter *
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={newFont.minHeightUppercase}
+                        onChange={(e) => setNewFont({ ...newFont, minHeightUppercase: e.target.value })}
+                        name="minHeightUppercase"
+                        placeholder="8.3"
+                        required
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px'
+                        }}
+                      />
+                      <span style={{ fontSize: '14px', color: '#666' }}>cm</span>
+                    </div>
+                    <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                      The minimum height of the uppercase letter in centimeters.
+                    </div>
+                  </div>
                 </div>
               </div>
 
