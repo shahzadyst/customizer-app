@@ -117,15 +117,15 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
   };
 
   const calculatePricePerCm2 = (parcelCost) => {
-    const width = 100;
-    const height = 80;
+    const width = formData.maxWidth;
+    const height = formData.maxHeight;
     const area = width * height;
     return (parseFloat(parcelCost) / area).toFixed(4);
   };
 
   const calculateParcelCost = (pricePerCm2) => {
-    const width = 100;
-    const height = 80;
+    const width = formData.maxWidth;
+    const height = formData.maxHeight;
     const area = width * height;
     return (parseFloat(pricePerCm2) * area).toFixed(2);
   };
@@ -227,7 +227,6 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   }}
                 >
                   <option>cm</option>
-                  <option>in</option>
                 </select>
               </div>
             </div>
@@ -257,7 +256,6 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                   }}
                 >
                   <option>cm</option>
-                  <option>in</option>
                 </select>
               </div>
             </div>
@@ -288,7 +286,6 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                     }}
                   >
                     <option>cm</option>
-                    <option>in</option>
                   </select>
                 </div>
               </div>
@@ -443,7 +440,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'end' }}>
-            <div>
+            <div className="parcelcostDiv">
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Parcel Cost
               </label>
@@ -465,7 +462,7 @@ function SizeBoundaryModal({ isOpen, onClose, onSave, boundary, letterPricingTyp
                 />
               </div>
               <p style={{ color: '#666', fontSize: '12px', marginTop: '4px', fontFamily: 'system-ui, -apple-system, sans-serif', lineHeight: 1.4 }}>
-                Enter the cost of the parcel at 100cm wide x 80cm high. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
+                Enter the cost of the parcel at {formData.maxWidth}cm wide x {formData.maxHeight}cm high. <a href="#" style={{ color: '#0066cc', textDecoration: 'none' }}>Learn more</a>
               </p>
             </div>
             <div style={{ fontSize: '20px', paddingBottom: '28px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#999' }}>=</div>
