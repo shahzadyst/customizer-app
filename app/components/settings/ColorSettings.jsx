@@ -192,8 +192,8 @@ export default function ColorSettings({ colors }) {
       <input type="hidden" name="colorEffect" value={state.colorEffect} />
       <input type="hidden" name="colors" value={JSON.stringify(state.colors)} />
 
-      <s-stack direction="block" gap="base">
-        <s-text weight="semibold">{isEdit ? 'Edit Color' : 'Add New Color'}</s-text>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>{isEdit ? 'Edit Color' : 'Add New Color'}</h3>
 
         <div>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Label *</label>
@@ -402,10 +402,39 @@ export default function ColorSettings({ colors }) {
         )}
 
         <div style={{ display: 'flex', gap: '8px' }}>
-          <s-button type="submit" variant="primary">Save Color</s-button>
-          <s-button onClick={() => isEdit ? handleCancelEdit() : setShowAddForm(false)} variant="secondary">Cancel</s-button>
+          <button
+            type="submit"
+            style={{
+              padding: '8px 16px',
+              background: '#000',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500
+            }}
+          >
+            Save Color
+          </button>
+          <button
+            type="button"
+            onClick={() => isEdit ? handleCancelEdit() : setShowAddForm(false)}
+            style={{
+              padding: '8px 16px',
+              background: 'white',
+              color: '#666',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500
+            }}
+          >
+            Cancel
+          </button>
         </div>
-      </s-stack>
+      </div>
     </fetcher.Form>
   );
 
@@ -417,27 +446,36 @@ export default function ColorSettings({ colors }) {
         alignItems: 'center',
         marginBottom: '24px'
       }}>
-        <s-text size="large" weight="semibold">Colors</s-text>
-        <s-button
+        <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>Colors</h2>
+        <button
           onClick={() => setShowAddForm(!showAddForm)}
-          variant="primary"
+          style={{
+            padding: '8px 16px',
+            background: '#000',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
         >
           {showAddForm ? 'Cancel' : 'Add Color'}
-        </s-button>
+        </button>
       </div>
 
       {showAddForm && (
-        <s-box padding="base" background="surface" style={{ marginBottom: '24px' }}>
+        <div style={{ padding: '16px', background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', marginBottom: '24px' }}>
           <ColorForm
             state={newColor}
             setState={setNewColor}
             isEdit={false}
             onSubmit={handleAddColor}
           />
-        </s-box>
+        </div>
       )}
 
-      <s-box background="surface">
+      <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e0e0e0' }}>
@@ -499,7 +537,7 @@ export default function ColorSettings({ colors }) {
                       </div>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <s-text weight="semibold">{color.name}</s-text>
+                      <div style={{ fontWeight: 600 }}>{color.name}</div>
                       {color.description && (
                         <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
                           {color.description}
@@ -507,15 +545,15 @@ export default function ColorSettings({ colors }) {
                       )}
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <s-text color="subdued">
+                      <div style={{ color: '#666' }}>
                         {color.colorEffect === COLOR_EFFECTS.SINGLE && 'Single'}
                         {color.colorEffect === COLOR_EFFECTS.MULTIPLE && 'Multiple'}
                         {color.colorEffect === COLOR_EFFECTS.FLOW && 'Flow'}
                         {!color.colorEffect && 'Single'}
-                      </s-text>
+                      </div>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <s-text color="subdued">{color.basePrice ? `$${color.basePrice}` : '-'}</s-text>
+                      <div style={{ color: '#666' }}>{color.basePrice ? `$${color.basePrice}` : '-'}</div>
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -566,7 +604,7 @@ export default function ColorSettings({ colors }) {
             )}
           </tbody>
         </table>
-      </s-box>
+      </div>
     </div>
   );
 }
