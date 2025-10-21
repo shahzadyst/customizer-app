@@ -22,7 +22,10 @@ export async function getFonts(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const fonts = await db.collection(collections.fonts).find(query).toArray();
-  return fonts;
+  return fonts.map(font => ({
+    ...font,
+    _id: font._id.toString()
+  }));
 }
 
 export async function addFont(shop, fontData, customizerId = null) {
@@ -52,7 +55,10 @@ export async function getColors(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const colors = await db.collection(collections.colors).find(query).toArray();
-  return colors;
+  return colors.map(color => ({
+    ...color,
+    _id: color._id.toString()
+  }));
 }
 
 export async function addColor(shop, colorData, customizerId = null) {
@@ -82,7 +88,10 @@ export async function getSizes(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const sizes = await db.collection(collections.sizes).find(query).toArray();
-  return sizes;
+  return sizes.map(size => ({
+    ...size,
+    _id: size._id.toString()
+  }));
 }
 
 export async function addSize(shop, sizeData, customizerId = null) {
@@ -112,7 +121,10 @@ export async function getUsageTypes(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const types = await db.collection(collections.usageTypes).find(query).toArray();
-  return types;
+  return types.map(type => ({
+    ...type,
+    _id: type._id.toString()
+  }));
 }
 
 export async function addUsageType(shop, typeData, customizerId = null) {
@@ -142,7 +154,10 @@ export async function getAcrylicShapes(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const shapes = await db.collection(collections.acrylicShapes).find(query).toArray();
-  return shapes;
+  return shapes.map(shape => ({
+    ...shape,
+    _id: shape._id.toString()
+  }));
 }
 
 export async function addAcrylicShape(shop, shapeData, customizerId = null) {
@@ -172,7 +187,10 @@ export async function getBackboardColors(shop, customizerId = null) {
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
   const colors = await db.collection(collections.backboardColors).find(query).toArray();
-  return colors;
+  return colors.map(color => ({
+    ...color,
+    _id: color._id.toString()
+  }));
 }
 
 export async function addBackboardColor(shop, colorData, customizerId = null) {
