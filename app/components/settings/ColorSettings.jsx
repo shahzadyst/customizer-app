@@ -4,7 +4,7 @@ import { useFetcher } from "react-router";
 export default function ColorSettings({ colors }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newColor, setNewColor] = useState({ name: "", hex: "#000000" });
+  const [newColor, setNewColor] = useState({ name: "", hex: "#000000", additionalPricing: "none", basePrice: "" });
   const [errors, setErrors] = useState({});
 
   const validateColor = (name, hex) => {
@@ -26,7 +26,7 @@ export default function ColorSettings({ colors }) {
       return;
     }
     setErrors({});
-    setNewColor({ name: "", hex: "#000000" });
+    setNewColor({ name: "", hex: "#000000", additionalPricing: "none", basePrice: "" });
     setShowAddForm(false);
   };
 
@@ -72,24 +72,85 @@ export default function ColorSettings({ colors }) {
                 {errors.colorName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorName}</div>}
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Hex Code *</label>
-                <input
-                  type="text"
-                  value={newColor.hex}
-                  onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
-                  name="hex"
-                  placeholder="#000000"
-                  required
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Color *</label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="color"
+                        value={newColor.hex}
+                        onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                        style={{
+                          width: '60px',
+                          height: '40px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      />
+                      <input
+                        type="text"
+                        value={newColor.hex}
+                        onChange={(e) => setNewColor({ ...newColor, hex: e.target.value })}
+                        name="hex"
+                        placeholder="#000000"
+                        required
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid ' + (errors.colorHex ? '#d32f2f' : '#ddd'),
+                          borderRadius: '4px',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+                    {errors.colorHex && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorHex}</div>}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Additional Pricing</label>
+                <select
+                  value={newColor.additionalPricing}
+                  onChange={(e) => setNewColor({ ...newColor, additionalPricing: e.target.value })}
+                  name="additionalPricing"
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid ' + (errors.colorHex ? '#d32f2f' : '#ddd'),
+                    border: '1px solid #ddd',
                     borderRadius: '4px',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    background: 'white'
                   }}
-                />
-                {errors.colorHex && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorHex}</div>}
+                >
+                  <option value="none">None</option>
+                  <option value="basePrice">Base Price</option>
+                </select>
               </div>
+              {newColor.additionalPricing === 'basePrice' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Base Price *</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px', color: '#666' }}>$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newColor.basePrice}
+                      onChange={(e) => setNewColor({ ...newColor, basePrice: e.target.value })}
+                      name="basePrice"
+                      placeholder="0.00"
+                      required
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '8px' }}>
                 <s-button type="submit" variant="primary">Save Color</s-button>
                 <s-button onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>
@@ -106,13 +167,14 @@ export default function ColorSettings({ colors }) {
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Preview</th>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Color Name</th>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Hex Code</th>
+              <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Base Price</th>
               <th style={{ padding: '16px', textAlign: 'right', fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {colors.length === 0 ? (
               <tr>
-                <td colSpan="4" style={{ padding: '32px', textAlign: 'center', color: '#666' }}>
+                <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: '#666' }}>
                   No colors added yet. Click "Add Color" to get started.
                 </td>
               </tr>
@@ -134,11 +196,31 @@ export default function ColorSettings({ colors }) {
                   <td style={{ padding: '16px' }}>
                     <s-text color="subdued">{color.hex}</s-text>
                   </td>
+                  <td style={{ padding: '16px' }}>
+                    <s-text color="subdued">{color.basePrice ? `$${color.basePrice}` : '-'}</s-text>
+                  </td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
                     <fetcher.Form method="post" style={{ display: 'inline' }}>
                       <input type="hidden" name="action" value="deleteColor" />
                       <input type="hidden" name="id" value={color._id.toString()} />
-                      <s-button size="small" variant="destructive" type="submit">Delete</s-button>
+                      <button
+                        type="submit"
+                        style={{
+                          padding: '6px 12px',
+                          background: '#d32f2f',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          fontFamily: 'system-ui, -apple-system, sans-serif'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                      >
+                        Delete
+                      </button>
                     </fetcher.Form>
                   </td>
                 </tr>
