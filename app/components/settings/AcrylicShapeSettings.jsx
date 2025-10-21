@@ -4,7 +4,9 @@ import { useFetcher } from "react-router";
 export default function AcrylicShapeSettings({ acrylicShapes }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [newShape, setNewShape] = useState({ name: "", imageUrl: "", description: "" });
+  const [editShape, setEditShape] = useState({});
   const [errors, setErrors] = useState({});
   const [dragOver, setDragOver] = useState(false);
 
@@ -55,6 +57,45 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
     setErrors({});
     setNewShape({ name: "", imageUrl: "", description: "" });
     setShowAddForm(false);
+  };
+
+  const handleEditClick = (shape) => {
+    setEditingId(shape._id.toString());
+    setEditShape({
+      name: shape.name,
+      imageUrl: shape.imageUrl || "",
+      description: shape.description || ""
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditShape({});
+    setErrors({});
+  };
+
+  const handleUpdate = (e) => {
+    const validationErrors = validateShape(editShape.name);
+    if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    setEditingId(null);
+    setEditShape({});
+  };
+
+  const handleEditImageSelect = (file) => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditShape({ ...editShape, imageUrl: reader.result });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setErrors({ ...errors, imageUrl: "Please select a valid image file" });
+    }
   };
 
   return (
@@ -236,60 +277,134 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
               </tr>
             ) : (
               acrylicShapes.map((shape) => (
-                <tr key={shape._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: '16px' }}>
-                    {shape.imageUrl ? (
-                      <img
-                        src={shape.imageUrl}
-                        alt={shape.name}
-                        style={{ width: '40px', height: '40px', objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#999'
-                      }}>
-                        N/A
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text weight="semibold">{shape.name}</s-text>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text color="subdued">{shape.description || '-'}</s-text>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="deleteAcrylicShape" />
-                      <input type="hidden" name="id" value={shape._id.toString()} />
-                      <button
-                        type="submit"
-                        style={{
-                          padding: '6px 12px',
-                          background: '#d32f2f',
-                          color: 'white',
-                          border: 'none',
+                editingId === shape._id.toString() ? (
+                  <tr key={shape._id.toString()} style={{ borderBottom: '1px solid #f0f0f0', background: '#f9f9f9' }}>
+                    <td colSpan="4" style={{ padding: '16px' }}>
+                      <fetcher.Form method="post" onSubmit={handleUpdate}>
+                        <input type="hidden" name="action" value="updateAcrylicShape" />
+                        <input type="hidden" name="id" value={shape._id.toString()} />
+                        <input type="hidden" name="imageUrl" value={editShape.imageUrl} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Shape Name *</label>
+                            <input
+                              type="text"
+                              value={editShape.name}
+                              onChange={(e) => setEditShape({ ...editShape, name: e.target.value })}
+                              name="name"
+                              required
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px'
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Description</label>
+                            <textarea
+                              value={editShape.description}
+                              onChange={(e) => setEditShape({ ...editShape, description: e.target.value })}
+                              name="description"
+                              rows="2"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                fontFamily: 'system-ui, -apple-system, sans-serif',
+                                resize: 'vertical'
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '16px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Shape Image</label>
+                          {editShape.imageUrl && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <img src={editShape.imageUrl} alt="Preview" style={{ maxWidth: '100px', maxHeight: '100px', border: '1px solid #ddd', borderRadius: '4px' }} />
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files[0]) {
+                                handleEditImageSelect(e.target.files[0]);
+                              }
+                            }}
+                            style={{ fontSize: '14px' }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button type="submit" style={{ padding: '8px 16px', background: '#000', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>Save</button>
+                          <button type="button" onClick={handleCancelEdit} style={{ padding: '8px 16px', background: 'white', color: '#666', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>Cancel</button>
+                        </div>
+                      </fetcher.Form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={shape._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '16px' }}>
+                      {shape.imageUrl ? (
+                        <img
+                          src={shape.imageUrl}
+                          alt={shape.name}
+                          style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          border: '1px solid #ddd',
                           borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          fontFamily: 'system-ui, -apple-system, sans-serif'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
-                      >
-                        Delete
-                      </button>
-                    </fetcher.Form>
-                  </td>
-                </tr>
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#999'
+                        }}>
+                          N/A
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text weight="semibold">{shape.name}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{shape.description || '-'}</s-text>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button type="button" onClick={() => handleEditClick(shape)} style={{ padding: '6px 12px', background: 'white', color: '#666', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Edit</button>
+                        <fetcher.Form method="post" style={{ display: 'inline' }}>
+                          <input type="hidden" name="action" value="deleteAcrylicShape" />
+                          <input type="hidden" name="id" value={shape._id.toString()} />
+                          <button
+                            type="submit"
+                            style={{
+                              padding: '6px 12px',
+                              background: '#d32f2f',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              fontFamily: 'system-ui, -apple-system, sans-serif'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                          >
+                            Delete
+                          </button>
+                        </fetcher.Form>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))
             )}
           </tbody>

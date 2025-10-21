@@ -4,7 +4,9 @@ import { useFetcher } from "react-router";
 export default function HangingOptionSettings({ hangingOptions }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [newOption, setNewOption] = useState({ name: "", additionalPricing: "none", basePrice: "" });
+  const [editOption, setEditOption] = useState({});
   const [errors, setErrors] = useState({});
 
   const validateName = (name) => {
@@ -25,6 +27,33 @@ export default function HangingOptionSettings({ hangingOptions }) {
     setErrors({});
     setNewOption({ name: "", additionalPricing: "none", basePrice: "" });
     setShowAddForm(false);
+  };
+
+  const handleEditClick = (option) => {
+    setEditingId(option._id.toString());
+    setEditOption({
+      name: option.name,
+      additionalPricing: option.additionalPricing || "none",
+      basePrice: option.basePrice || ""
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditOption({});
+    setErrors({});
+  };
+
+  const handleUpdate = (e) => {
+    const validationErrors = validateName(editOption.name);
+    if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    setEditingId(null);
+    setEditOption({});
   };
 
   return (
@@ -139,38 +168,118 @@ export default function HangingOptionSettings({ hangingOptions }) {
               </tr>
             ) : (
               hangingOptions.map((option) => (
-                <tr key={option._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: '16px' }}>
-                    <s-text weight="semibold">{option.name}</s-text>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text color="subdued">{option.basePrice ? `$${option.basePrice}` : '-'}</s-text>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="deleteHangingOption" />
-                      <input type="hidden" name="id" value={option._id.toString()} />
-                      <button
-                        type="submit"
-                        style={{
-                          padding: '6px 12px',
-                          background: '#d32f2f',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          fontFamily: 'system-ui, -apple-system, sans-serif'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
-                      >
-                        Delete
-                      </button>
-                    </fetcher.Form>
-                  </td>
-                </tr>
+                editingId === option._id.toString() ? (
+                  <tr key={option._id.toString()} style={{ borderBottom: '1px solid #f0f0f0', background: '#f9f9f9' }}>
+                    <td colSpan="3" style={{ padding: '16px' }}>
+                      <fetcher.Form method="post" onSubmit={handleUpdate}>
+                        <input type="hidden" name="action" value="updateHangingOption" />
+                        <input type="hidden" name="id" value={option._id.toString()} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Option Name *</label>
+                            <input
+                              type="text"
+                              value={editOption.name}
+                              onChange={(e) => setEditOption({ ...editOption, name: e.target.value })}
+                              name="name"
+                              required
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px'
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Additional Pricing</label>
+                            <select
+                              value={editOption.additionalPricing}
+                              onChange={(e) => setEditOption({ ...editOption, additionalPricing: e.target.value })}
+                              name="additionalPricing"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                background: 'white'
+                              }}
+                            >
+                              <option value="none">None</option>
+                              <option value="basePrice">Base Price</option>
+                            </select>
+                          </div>
+                          {editOption.additionalPricing === 'basePrice' && (
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Base Price *</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editOption.basePrice}
+                                  onChange={(e) => setEditOption({ ...editOption, basePrice: e.target.value })}
+                                  name="basePrice"
+                                  placeholder="0.00"
+                                  required
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    fontSize: '14px'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button type="submit" style={{ padding: '8px 16px', background: '#000', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>Save</button>
+                          <button type="button" onClick={handleCancelEdit} style={{ padding: '8px 16px', background: 'white', color: '#666', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>Cancel</button>
+                        </div>
+                      </fetcher.Form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={option._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '16px' }}>
+                      <s-text weight="semibold">{option.name}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{option.basePrice ? `$${option.basePrice}` : '-'}</s-text>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button type="button" onClick={() => handleEditClick(option)} style={{ padding: '6px 12px', background: 'white', color: '#666', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>Edit</button>
+                        <fetcher.Form method="post" style={{ display: 'inline' }}>
+                          <input type="hidden" name="action" value="deleteHangingOption" />
+                          <input type="hidden" name="id" value={option._id.toString()} />
+                          <button
+                            type="submit"
+                            style={{
+                              padding: '6px 12px',
+                              background: '#d32f2f',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              fontFamily: 'system-ui, -apple-system, sans-serif'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                          >
+                            Delete
+                          </button>
+                        </fetcher.Form>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))
             )}
           </tbody>
