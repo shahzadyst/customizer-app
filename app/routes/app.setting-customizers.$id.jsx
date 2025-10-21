@@ -137,9 +137,14 @@ export const action = async ({ request, params }) => {
       }
 
       case "addColor": {
+        const colorsStr = formData.get("colors");
+        const colors = colorsStr ? JSON.parse(colorsStr) : [];
         await addColor(shop, {
           name: formData.get("name"),
-          hex: formData.get("hex"),
+          description: formData.get("description") || "",
+          colorEffect: formData.get("colorEffect") || "single",
+          colors: colors,
+          hex: colors[0] || "#000000",
           additionalPricing: formData.get("additionalPricing") || "none",
           basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
@@ -147,9 +152,14 @@ export const action = async ({ request, params }) => {
       }
 
       case "updateColor": {
+        const colorsStr = formData.get("colors");
+        const colors = colorsStr ? JSON.parse(colorsStr) : [];
         await updateColor(shop, formData.get("id"), {
           name: formData.get("name"),
-          hex: formData.get("hex"),
+          description: formData.get("description") || "",
+          colorEffect: formData.get("colorEffect") || "single",
+          colors: colors,
+          hex: colors[0] || "#000000",
           additionalPricing: formData.get("additionalPricing") || "none",
           basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         });
