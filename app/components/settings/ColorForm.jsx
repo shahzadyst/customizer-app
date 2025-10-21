@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { Form } from "react-router";
 
 const COLOR_EFFECTS = {
@@ -6,6 +6,85 @@ const COLOR_EFFECTS = {
   MULTIPLE: 'multiple',
   FLOW: 'flow'
 };
+
+const ColorPreviewInForm = memo(({ colors, colorEffect }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (colorEffect === COLOR_EFFECTS.MULTIPLE && colors.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % colors.length);
+      }, 500);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [colors.length, colorEffect]);
+
+  if (colorEffect === COLOR_EFFECTS.SINGLE) {
+    return (
+      <div style={{
+        fontSize: '60px',
+        fontWeight: 'bold',
+        letterSpacing: '2px',
+        color: colors[0],
+        padding: '50px 0px'
+      }}>
+        PREVIEW
+      </div>
+    );
+  }
+
+  if (colorEffect === COLOR_EFFECTS.MULTIPLE) {
+    return (
+      <div style={{
+        fontSize: '60px',
+        fontWeight: 'bold',
+        letterSpacing: '2px',
+        position: 'absolute',
+        color: 'white',
+        top: '0px',
+        left: '50px',
+        WebkitTextStroke: `4px ${colors[currentIndex]}`,
+        padding: '50px 0px',
+        animation: '12s linear infinite dVFlEb'
+      }}>
+        PREVIEW
+      </div>
+    );
+  }
+
+  if (colorEffect === COLOR_EFFECTS.FLOW) {
+    return (
+      <>
+        <style>{`
+          @keyframes bGunhW {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
+        <div style={{
+          fontSize: '60px',
+          padding: '50px 0px',
+          fontWeight: 'bold',
+          letterSpacing: '2px',
+          backgroundImage: '-webkit-linear-gradient(-45deg, rgb(234, 58, 169), rgb(247, 204, 25), rgb(84, 181, 246), rgb(235, 64, 52), rgb(90, 29, 136), rgb(253, 244, 220), rgb(36, 217, 199), rgb(255, 0, 0))',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          animation: '2s linear infinite bGunhW',
+          backgroundSize: '200% 200%'
+        }}>
+          PREVIEW
+        </div>
+      </>
+    );
+  }
+
+  return null;
+});
+
+ColorPreviewInForm.displayName = 'ColorPreviewInForm';
 
 const ColorForm = memo(({
   initialState,
@@ -204,6 +283,23 @@ const ColorForm = memo(({
               Add Color
             </button>
           )}
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Preview</label>
+          <div style={{
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            padding: '16px',
+            background: '#f9f9f9',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '180px',
+            position: 'relative'
+          }}>
+            <ColorPreviewInForm colors={state.colors} colorEffect={state.colorEffect} />
+          </div>
         </div>
 
         <div>
