@@ -2,7 +2,7 @@ export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const host = url.host;
   const protocol = url.protocol;
-
+  console.log('ASDFASDFSDAFSADF');
   const testShop = "customizer-app-store-2.myshopify.com";
   const embedUrl = `${protocol}//${host}/embed/${testShop}`;
   const apiUrl = `${protocol}//${host}/api/config/${testShop}`;

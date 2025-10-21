@@ -27,12 +27,13 @@
   <script>
     (function() {
       const customizerId = '{{ block.settings.customizer_id }}';
-      const appUrl = '{{ shop.url }}/apps/{{ app.handle }}';
+      const appUrl = 'https://divisions-logging-consequently-rouge.trycloudflare.com';
 
       if (!document.querySelector('script[data-sign-customizer-loaded]')) {
         const script = document.createElement('script');
         script.src = appUrl + '/embed/{{ shop.permanent_domain }}';
         script.setAttribute('data-sign-customizer-loaded', 'true');
+        script.setAttribute('data-customizer-id', customizerId);
         script.defer = true;
         document.body.appendChild(script);
       }
