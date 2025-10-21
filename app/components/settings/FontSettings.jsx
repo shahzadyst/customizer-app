@@ -18,6 +18,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showGoogleFontsModal, setShowGoogleFontsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const [newFont, setNewFont] = useState({
     name: "",
     fontFamily: "",
@@ -25,6 +26,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
     minHeightSmallest: "",
     minHeightUppercase: ""
   });
+  const [editFont, setEditFont] = useState({});
   const [errors, setErrors] = useState({});
   const [loadedFonts, setLoadedFonts] = useState(new Set());
 
@@ -75,6 +77,35 @@ export default function FontSettings({ fonts, pricings = [] }) {
       minHeightUppercase: ""
     });
     setShowAddForm(false);
+  };
+
+  const handleEditClick = (font) => {
+    setEditingId(font._id.toString());
+    setEditFont({
+      name: font.name,
+      fontFamily: font.fontFamily,
+      pricingId: font.pricingId || "",
+      minHeightSmallest: font.minHeightSmallest || "",
+      minHeightUppercase: font.minHeightUppercase || ""
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditFont({});
+    setErrors({});
+  };
+
+  const handleUpdateFont = (e) => {
+    const validationErrors = validateFont(editFont.name, editFont.fontFamily);
+    if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    setEditingId(null);
+    setEditFont({});
   };
 
   const filteredFonts = POPULAR_GOOGLE_FONTS.filter(font =>
@@ -448,6 +479,144 @@ export default function FontSettings({ fonts, pricings = [] }) {
             ) : (
               fonts.map((font) => {
                 const pricing = pricings.find(p => p._id.toString() === font.pricingId);
+                if (editingId === font._id.toString()) {
+                  return (
+                    <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0', background: '#f9f9f9' }}>
+                      <td colSpan="4" style={{ padding: '16px' }}>
+                        <fetcher.Form method="post" onSubmit={handleUpdateFont}>
+                          <input type="hidden" name="action" value="updateFont" />
+                          <input type="hidden" name="id" value={font._id.toString()} />
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Font Name *</label>
+                              <input
+                                type="text"
+                                value={editFont.name}
+                                onChange={(e) => setEditFont({ ...editFont, name: e.target.value })}
+                                name="name"
+                                required
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '14px'
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Font Family *</label>
+                              <input
+                                type="text"
+                                value={editFont.fontFamily}
+                                onChange={(e) => setEditFont({ ...editFont, fontFamily: e.target.value })}
+                                name="fontFamily"
+                                required
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '14px'
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Pricing</label>
+                              <select
+                                value={editFont.pricingId}
+                                onChange={(e) => setEditFont({ ...editFont, pricingId: e.target.value })}
+                                name="pricingId"
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '14px',
+                                  background: 'white'
+                                }}
+                              >
+                                <option value="">Select pricing</option>
+                                {pricings.map(p => (
+                                  <option key={p._id} value={p._id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Min Height (Smallest)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={editFont.minHeightSmallest}
+                                onChange={(e) => setEditFont({ ...editFont, minHeightSmallest: e.target.value })}
+                                name="minHeightSmallest"
+                                placeholder="0.00"
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '14px'
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Min Height (Uppercase)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={editFont.minHeightUppercase}
+                                onChange={(e) => setEditFont({ ...editFont, minHeightUppercase: e.target.value })}
+                                name="minHeightUppercase"
+                                placeholder="0.00"
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '14px'
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              type="submit"
+                              style={{
+                                padding: '8px 16px',
+                                background: '#000',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: 500
+                              }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              style={{
+                                padding: '8px 16px',
+                                background: 'white',
+                                color: '#666',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: 500
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </fetcher.Form>
+                      </td>
+                    </tr>
+                  );
+                }
                 return (
                   <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
                     <td style={{ padding: '16px' }}>
@@ -460,28 +629,47 @@ export default function FontSettings({ fonts, pricings = [] }) {
                       <s-text color="subdued">{pricing ? pricing.name : '-'}</s-text>
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <fetcher.Form method="post" style={{ display: 'inline' }}>
-                        <input type="hidden" name="action" value="deleteFont" />
-                        <input type="hidden" name="id" value={font._id.toString()} />
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={() => handleEditClick(font)}
                           style={{
                             padding: '6px 12px',
-                            background: '#d32f2f',
-                            color: 'white',
-                            border: 'none',
+                            background: 'white',
+                            color: '#666',
+                            border: '1px solid #ddd',
                             borderRadius: '4px',
                             cursor: 'pointer',
                             fontSize: '13px',
                             fontWeight: 500,
                             fontFamily: 'system-ui, -apple-system, sans-serif'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
                         >
-                          Delete
+                          Edit
                         </button>
-                      </fetcher.Form>
+                        <fetcher.Form method="post" style={{ display: 'inline' }}>
+                          <input type="hidden" name="action" value="deleteFont" />
+                          <input type="hidden" name="id" value={font._id.toString()} />
+                          <button
+                            type="submit"
+                            style={{
+                              padding: '6px 12px',
+                              background: '#d32f2f',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              fontFamily: 'system-ui, -apple-system, sans-serif'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                          >
+                            Delete
+                          </button>
+                        </fetcher.Form>
+                      </div>
                     </td>
                   </tr>
                 );
