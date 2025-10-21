@@ -5,24 +5,31 @@ import { getCustomizer } from "../models/customizer.server";
 import {
   getFonts,
   addFont,
+  updateFont,
   deleteFont,
   getColors,
   addColor,
+  updateColor,
   deleteColor,
   getSizes,
   addSize,
+  updateSize,
   deleteSize,
   getUsageTypes,
   addUsageType,
+  updateUsageType,
   deleteUsageType,
   getAcrylicShapes,
   addAcrylicShape,
+  updateAcrylicShape,
   deleteAcrylicShape,
   getBackboardColors,
   addBackboardColor,
+  updateBackboardColor,
   deleteBackboardColor,
   getHangingOptions,
   addHangingOption,
+  updateHangingOption,
   deleteHangingOption,
   getPricings,
 } from "../models/signage.server";
@@ -113,6 +120,17 @@ export const action = async ({ request, params }) => {
         return { success: true };
       }
 
+      case "updateFont": {
+        await updateFont(shop, formData.get("id"), {
+          name: formData.get("name"),
+          fontFamily: formData.get("fontFamily"),
+          pricingId: formData.get("pricingId") || null,
+          minHeightSmallest: formData.get("minHeightSmallest") ? parseFloat(formData.get("minHeightSmallest")) : null,
+          minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
+        });
+        return { success: true };
+      }
+
       case "deleteFont": {
         await deleteFont(shop, formData.get("id"));
         return { success: true };
@@ -125,6 +143,16 @@ export const action = async ({ request, params }) => {
           additionalPricing: formData.get("additionalPricing") || "none",
           basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
+        return { success: true };
+      }
+
+      case "updateColor": {
+        await updateColor(shop, formData.get("id"), {
+          name: formData.get("name"),
+          hex: formData.get("hex"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
+        });
         return { success: true };
       }
 
@@ -141,6 +169,14 @@ export const action = async ({ request, params }) => {
         return { success: true };
       }
 
+      case "updateSize": {
+        await updateSize(shop, formData.get("id"), {
+          label: formData.get("label"),
+          multiplier: parseFloat(formData.get("multiplier")),
+        });
+        return { success: true };
+      }
+
       case "deleteSize": {
         await deleteSize(shop, formData.get("id"));
         return { success: true };
@@ -150,6 +186,13 @@ export const action = async ({ request, params }) => {
         await addUsageType(shop, {
           name: formData.get("name"),
         }, customizerId);
+        return { success: true };
+      }
+
+      case "updateUsageType": {
+        await updateUsageType(shop, formData.get("id"), {
+          name: formData.get("name"),
+        });
         return { success: true };
       }
 
@@ -164,6 +207,15 @@ export const action = async ({ request, params }) => {
           imageUrl: formData.get("imageUrl"),
           description: formData.get("description"),
         }, customizerId);
+        return { success: true };
+      }
+
+      case "updateAcrylicShape": {
+        await updateAcrylicShape(shop, formData.get("id"), {
+          name: formData.get("name"),
+          imageUrl: formData.get("imageUrl"),
+          description: formData.get("description"),
+        });
         return { success: true };
       }
 
@@ -182,6 +234,16 @@ export const action = async ({ request, params }) => {
         return { success: true };
       }
 
+      case "updateBackboardColor": {
+        await updateBackboardColor(shop, formData.get("id"), {
+          name: formData.get("name"),
+          hex: formData.get("hex"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
+        });
+        return { success: true };
+      }
+
       case "deleteBackboardColor": {
         await deleteBackboardColor(shop, formData.get("id"));
         return { success: true };
@@ -193,6 +255,15 @@ export const action = async ({ request, params }) => {
           additionalPricing: formData.get("additionalPricing") || "none",
           basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
+        return { success: true };
+      }
+
+      case "updateHangingOption": {
+        await updateHangingOption(shop, formData.get("id"), {
+          name: formData.get("name"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
+        });
         return { success: true };
       }
 

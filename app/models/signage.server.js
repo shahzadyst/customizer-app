@@ -39,6 +39,16 @@ export async function addFont(shop, fontData, customizerId = null) {
   return result;
 }
 
+export async function updateFont(shop, fontId, fontData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.fonts).updateOne(
+    { _id: new ObjectId(fontId), shop },
+    { $set: { ...fontData, updatedAt: new Date() } }
+  );
+  return result;
+}
+
 export async function deleteFont(shop, fontId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
@@ -69,6 +79,16 @@ export async function addColor(shop, colorData, customizerId = null) {
     ...colorData,
     createdAt: new Date(),
   });
+  return result;
+}
+
+export async function updateColor(shop, colorId, colorData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.colors).updateOne(
+    { _id: new ObjectId(colorId), shop },
+    { $set: { ...colorData, updatedAt: new Date() } }
+  );
   return result;
 }
 
@@ -105,6 +125,16 @@ export async function addSize(shop, sizeData, customizerId = null) {
   return result;
 }
 
+export async function updateSize(shop, sizeId, sizeData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.sizes).updateOne(
+    { _id: new ObjectId(sizeId), shop },
+    { $set: { ...sizeData, updatedAt: new Date() } }
+  );
+  return result;
+}
+
 export async function deleteSize(shop, sizeId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
@@ -135,6 +165,16 @@ export async function addUsageType(shop, typeData, customizerId = null) {
     ...typeData,
     createdAt: new Date(),
   });
+  return result;
+}
+
+export async function updateUsageType(shop, typeId, typeData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.usageTypes).updateOne(
+    { _id: new ObjectId(typeId), shop },
+    { $set: { ...typeData, updatedAt: new Date() } }
+  );
   return result;
 }
 
@@ -171,6 +211,16 @@ export async function addAcrylicShape(shop, shapeData, customizerId = null) {
   return result;
 }
 
+export async function updateAcrylicShape(shop, shapeId, shapeData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.acrylicShapes).updateOne(
+    { _id: new ObjectId(shapeId), shop },
+    { $set: { ...shapeData, updatedAt: new Date() } }
+  );
+  return result;
+}
+
 export async function deleteAcrylicShape(shop, shapeId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
@@ -204,6 +254,16 @@ export async function addBackboardColor(shop, colorData, customizerId = null) {
   return result;
 }
 
+export async function updateBackboardColor(shop, colorId, colorData) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+  const result = await db.collection(collections.backboardColors).updateOne(
+    { _id: new ObjectId(colorId), shop },
+    { $set: { ...colorData, updatedAt: new Date() } }
+  );
+  return result;
+}
+
 export async function deleteBackboardColor(shop, colorId) {
   const db = await getDb();
   const { ObjectId } = await import('mongodb');
@@ -231,6 +291,16 @@ export async function addHangingOption(shop, optionData, customizerId = null) {
     ...optionData,
     createdAt: new Date(),
   });
+  return result;
+}
+
+export async function updateHangingOption(shop, optionId, optionData) {
+  const db = await getDb();
+  const { ObjectId} = await import('mongodb');
+  const result = await db.collection(collections.hangingOptions).updateOne(
+    { _id: new ObjectId(optionId), shop },
+    { $set: { ...optionData, updatedAt: new Date() } }
+  );
   return result;
 }
 

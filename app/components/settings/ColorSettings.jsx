@@ -4,7 +4,9 @@ import { useFetcher } from "react-router";
 export default function ColorSettings({ colors }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [newColor, setNewColor] = useState({ name: "", hex: "#000000", additionalPricing: "none", basePrice: "" });
+  const [editColor, setEditColor] = useState({});
   const [errors, setErrors] = useState({});
 
   const validateColor = (name, hex) => {
@@ -28,6 +30,34 @@ export default function ColorSettings({ colors }) {
     setErrors({});
     setNewColor({ name: "", hex: "#000000", additionalPricing: "none", basePrice: "" });
     setShowAddForm(false);
+  };
+
+  const handleEditClick = (color) => {
+    setEditingId(color._id.toString());
+    setEditColor({
+      name: color.name,
+      hex: color.hex,
+      additionalPricing: color.additionalPricing || "none",
+      basePrice: color.basePrice || ""
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditColor({});
+    setErrors({});
+  };
+
+  const handleUpdateColor = (e, id) => {
+    const validationErrors = validateColor(editColor.name, editColor.hex);
+    if (Object.keys(validationErrors).length > 0) {
+      e.preventDefault();
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+    setEditingId(null);
+    setEditColor({});
   };
 
   return (
@@ -180,50 +210,208 @@ export default function ColorSettings({ colors }) {
               </tr>
             ) : (
               colors.map((color) => (
-                <tr key={color._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: color.hex,
-                      border: '1px solid #ddd',
-                      borderRadius: '4px'
-                    }} />
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text weight="semibold">{color.name}</s-text>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text color="subdued">{color.hex}</s-text>
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <s-text color="subdued">{color.basePrice ? `$${color.basePrice}` : '-'}</s-text>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <fetcher.Form method="post" style={{ display: 'inline' }}>
-                      <input type="hidden" name="action" value="deleteColor" />
-                      <input type="hidden" name="id" value={color._id.toString()} />
-                      <button
-                        type="submit"
-                        style={{
-                          padding: '6px 12px',
-                          background: '#d32f2f',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          fontFamily: 'system-ui, -apple-system, sans-serif'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
-                      >
-                        Delete
-                      </button>
-                    </fetcher.Form>
-                  </td>
-                </tr>
+                editingId === color._id.toString() ? (
+                  <tr key={color._id.toString()} style={{ borderBottom: '1px solid #f0f0f0', background: '#f9f9f9' }}>
+                    <td colSpan="5" style={{ padding: '16px' }}>
+                      <fetcher.Form method="post" onSubmit={(e) => handleUpdateColor(e, color._id.toString())}>
+                        <input type="hidden" name="action" value="updateColor" />
+                        <input type="hidden" name="id" value={color._id.toString()} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Color Name *</label>
+                            <input
+                              type="text"
+                              value={editColor.name}
+                              onChange={(e) => setEditColor({ ...editColor, name: e.target.value })}
+                              name="name"
+                              required
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid ' + (errors.colorName ? '#d32f2f' : '#ddd'),
+                                borderRadius: '4px',
+                                fontSize: '14px'
+                              }}
+                            />
+                            {errors.colorName && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorName}</div>}
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Color *</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <input
+                                type="color"
+                                value={editColor.hex}
+                                onChange={(e) => setEditColor({ ...editColor, hex: e.target.value })}
+                                style={{
+                                  width: '60px',
+                                  height: '40px',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer'
+                                }}
+                              />
+                              <input
+                                type="text"
+                                value={editColor.hex}
+                                onChange={(e) => setEditColor({ ...editColor, hex: e.target.value })}
+                                name="hex"
+                                required
+                                style={{
+                                  flex: 1,
+                                  padding: '8px 12px',
+                                  border: '1px solid ' + (errors.colorHex ? '#d32f2f' : '#ddd'),
+                                  borderRadius: '4px',
+                                  fontSize: '14px'
+                                }}
+                              />
+                            </div>
+                            {errors.colorHex && <div style={{ color: '#d32f2f', fontSize: '12px', marginTop: '4px' }}>{errors.colorHex}</div>}
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Additional Pricing</label>
+                            <select
+                              value={editColor.additionalPricing}
+                              onChange={(e) => setEditColor({ ...editColor, additionalPricing: e.target.value })}
+                              name="additionalPricing"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                background: 'white'
+                              }}
+                            >
+                              <option value="none">None</option>
+                              <option value="basePrice">Base Price</option>
+                            </select>
+                          </div>
+                          {editColor.additionalPricing === 'basePrice' && (
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Base Price *</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editColor.basePrice}
+                                  onChange={(e) => setEditColor({ ...editColor, basePrice: e.target.value })}
+                                  name="basePrice"
+                                  placeholder="0.00"
+                                  required
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    fontSize: '14px'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="submit"
+                            style={{
+                              padding: '8px 16px',
+                              background: '#000',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: 500
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'white',
+                              color: '#666',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: 500
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </fetcher.Form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={color._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: color.hex,
+                        border: '1px solid #ddd',
+                        borderRadius: '4px'
+                      }} />
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text weight="semibold">{color.name}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{color.hex}</s-text>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <s-text color="subdued">{color.basePrice ? `$${color.basePrice}` : '-'}</s-text>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(color)}
+                          style={{
+                            padding: '6px 12px',
+                            background: 'white',
+                            color: '#666',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            fontFamily: 'system-ui, -apple-system, sans-serif'
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <fetcher.Form method="post" style={{ display: 'inline' }}>
+                          <input type="hidden" name="action" value="deleteColor" />
+                          <input type="hidden" name="id" value={color._id.toString()} />
+                          <button
+                            type="submit"
+                            style={{
+                              padding: '6px 12px',
+                              background: '#d32f2f',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              fontFamily: 'system-ui, -apple-system, sans-serif'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#b71c1c'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#d32f2f'}
+                          >
+                            Delete
+                          </button>
+                        </fetcher.Form>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))
             )}
           </tbody>
