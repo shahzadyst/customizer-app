@@ -52,11 +52,11 @@ export const loader = async ({ params, request }) => {
       config: {
         customizerId: targetCustomizerId,
         fonts: fonts.filter(f => f.isActive !== false),
-        colors: colors.filter(c => c.isActive !== false),
+        colors: colors.filter(c => c.isActive !== false).map(c => ({ ...c, hexValue: c.hex })),
         sizes: sizes.filter(s => s.isActive !== false),
         usageTypes: usageTypes.filter(u => u.isActive !== false),
         acrylicShapes: acrylicShapes.filter(a => a.isActive !== false),
-        backboardColors: backboardColors.filter(b => b.isActive !== false),
+        backboardColors: backboardColors.filter(b => b.isActive !== false).map(b => ({ ...b, hexValue: b.hex })),
         hangingOptions: hangingOptions.filter(h => h.isActive !== false),
         pricings: pricings.filter(p => p.isActive !== false),
       },

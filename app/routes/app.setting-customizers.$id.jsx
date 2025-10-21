@@ -122,6 +122,8 @@ export const action = async ({ request, params }) => {
         await addColor(shop, {
           name: formData.get("name"),
           hex: formData.get("hex"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
         return { success: true };
       }
@@ -160,6 +162,7 @@ export const action = async ({ request, params }) => {
         await addAcrylicShape(shop, {
           name: formData.get("name"),
           imageUrl: formData.get("imageUrl"),
+          description: formData.get("description"),
         }, customizerId);
         return { success: true };
       }
@@ -173,6 +176,8 @@ export const action = async ({ request, params }) => {
         await addBackboardColor(shop, {
           name: formData.get("name"),
           hex: formData.get("hex"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
         return { success: true };
       }
@@ -185,6 +190,8 @@ export const action = async ({ request, params }) => {
       case "addHangingOption": {
         await addHangingOption(shop, {
           name: formData.get("name"),
+          additionalPricing: formData.get("additionalPricing") || "none",
+          basePrice: formData.get("basePrice") ? parseFloat(formData.get("basePrice")) : null,
         }, customizerId);
         return { success: true };
       }

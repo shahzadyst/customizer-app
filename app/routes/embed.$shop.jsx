@@ -8,7 +8,15 @@ export const loader = async ({ params, request }) => {
   'use strict';
 
   const SHOP_DOMAIN = '${shop}';
-  const API_URL = '${appUrl}/api/config/' + SHOP_DOMAIN;
+
+  const scriptTag = document.currentScript || document.querySelector('script[src*="embed"]');
+  const customizerId = scriptTag ? scriptTag.getAttribute('data-customizer-id') : null;
+
+  let apiUrl = '${appUrl}/api/config/' + SHOP_DOMAIN;
+  if (customizerId) {
+    apiUrl += '?customizerId=' + customizerId;
+  }
+  const API_URL = apiUrl;
 
   let config = null;
   let currentSelection = {
