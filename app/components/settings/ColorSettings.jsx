@@ -130,7 +130,8 @@ export default function ColorSettings({ colors }) {
         }, 500);
         return () => clearInterval(interval);
       }
-    }, [colors, colorEffect]);
+      return undefined;
+    }, [colors.length, colorEffect]);
 
     if (colorEffect === COLOR_EFFECTS.SINGLE) {
       return (
@@ -200,7 +201,12 @@ export default function ColorSettings({ colors }) {
           <input
             type="text"
             value={state.name}
-            onChange={(e) => setState({ ...state, name: e.target.value })}
+            onChange={(e) => {
+              e.stopPropagation();
+              setState({ ...state, name: e.target.value });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             name="name"
             placeholder="RGB"
             required
@@ -219,7 +225,12 @@ export default function ColorSettings({ colors }) {
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Description</label>
           <textarea
             value={state.description}
-            onChange={(e) => setState({ ...state, description: e.target.value })}
+            onChange={(e) => {
+              e.stopPropagation();
+              setState({ ...state, description: e.target.value });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             name="description"
             placeholder="Shows inline with the label"
             maxLength={255}
@@ -243,7 +254,12 @@ export default function ColorSettings({ colors }) {
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Color Effect *</label>
           <select
             value={state.colorEffect}
-            onChange={(e) => handleColorEffectChange(e.target.value, isEdit)}
+            onChange={(e) => {
+              e.stopPropagation();
+              handleColorEffectChange(e.target.value, isEdit);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             style={{
               width: '100%',
               padding: '8px 12px',
@@ -274,7 +290,12 @@ export default function ColorSettings({ colors }) {
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => updateColorInArray(index, e.target.value, isEdit)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateColorInArray(index, e.target.value, isEdit);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                   style={{
                     width: '80px',
                     height: '80px',
@@ -360,7 +381,12 @@ export default function ColorSettings({ colors }) {
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Additional Pricing</label>
           <select
             value={state.additionalPricing}
-            onChange={(e) => setState({ ...state, additionalPricing: e.target.value })}
+            onChange={(e) => {
+              e.stopPropagation();
+              setState({ ...state, additionalPricing: e.target.value });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             name="additionalPricing"
             style={{
               width: '100%',
@@ -385,7 +411,12 @@ export default function ColorSettings({ colors }) {
                 type="number"
                 step="0.01"
                 value={state.basePrice}
-                onChange={(e) => setState({ ...state, basePrice: e.target.value })}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setState({ ...state, basePrice: e.target.value });
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
                 name="basePrice"
                 placeholder="0.00"
                 required
