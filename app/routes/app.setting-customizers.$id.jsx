@@ -125,6 +125,7 @@ export const action = async ({ request, params }) => {
           minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
           fontFileUrl: formData.get("fontFileUrl") || null,
           fontFileName: formData.get("fontFileName") || null,
+          fileId: formData.get("fileId") || null,
           isCustomFont: formData.get("isCustomFont") === "true",
         }, customizerId);
         return { success: true };
@@ -139,6 +140,7 @@ export const action = async ({ request, params }) => {
           minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
           fontFileUrl: formData.get("fontFileUrl") || null,
           fontFileName: formData.get("fontFileName") || null,
+          fileId: formData.get("fileId") || null,
           isCustomFont: formData.get("isCustomFont") === "true",
         });
         return { success: true };

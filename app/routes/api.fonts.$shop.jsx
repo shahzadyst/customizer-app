@@ -1,12 +1,15 @@
 import { getFonts } from "../models/signage.server";
 
-export const loader = async ({ params }) => {
+export const loader = async ({ params, request }) => {
   const { shop } = params;
 
   try {
     const fonts = await getFonts(shop);
 
     const customFonts = fonts.filter(font => font.isCustomFont && font.fontFileUrl);
+
+    const url = new URL(request.url);
+    const appUrl = process.env.SHOPIFY_APP_URL || `${url.protocol}//${url.host}`;
 
     let cssContent = '';
 
@@ -17,10 +20,14 @@ export const loader = async ({ params }) => {
                         font.fontFileName?.endsWith('.otf') ? 'opentype' :
                         'truetype';
 
+      const fontUrl = font.fontFileUrl.startsWith('http')
+        ? font.fontFileUrl
+        : `${appUrl}${font.fontFileUrl}`;
+
       cssContent += `
 @font-face {
   font-family: '${fontFamily}';
-  src: url('${font.fontFileUrl}') format('${fontFormat}');
+  src: url('${fontUrl}') format('${fontFormat}');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

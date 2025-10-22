@@ -27,6 +27,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
     minHeightUppercase: "",
     fontFileUrl: "",
     fontFileName: "",
+    fileId: "",
     isCustomFont: false
   });
   const [editFont, setEditFont] = useState({});
@@ -81,6 +82,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
       minHeightUppercase: "",
       fontFileUrl: "",
       fontFileName: "",
+      fileId: "",
       isCustomFont: false
     });
     setShowAddForm(false);
@@ -267,6 +269,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
                               fontFamily: fontName,
                               fontFileUrl: result.fontFileUrl,
                               fontFileName: result.fontFileName,
+                              fileId: result.fileId || '',
                               isCustomFont: true
                             });
                           } else {
@@ -403,6 +406,7 @@ export default function FontSettings({ fonts, pricings = [] }) {
 
               <input type="hidden" name="fontFileUrl" value={newFont.fontFileUrl} />
               <input type="hidden" name="fontFileName" value={newFont.fontFileName} />
+              <input type="hidden" name="fileId" value={newFont.fileId} />
               <input type="hidden" name="isCustomFont" value={newFont.isCustomFont} />
 
               <div style={{ display: 'flex', gap: '8px' }}>

@@ -1,5 +1,22 @@
 import { authenticate } from "../shopify.server";
-import { supabase } from "../supabase.server";
+import { MongoClient, GridFSBucket } from 'mongodb';
+
+let cachedClient = null;
+
+async function getMongoClient() {
+  if (cachedClient) {
+    return cachedClient;
+  }
+
+  const uri = process.env.MONGODB_URL;
+  if (!uri) {
+    throw new Error('MONGODB_URL is not configured');
+  }
+
+  cachedClient = new MongoClient(uri);
+  await cachedClient.connect();
+  return cachedClient;
+}
 
 export const action = async ({ request }) => {
   try {
@@ -32,34 +49,44 @@ export const action = async ({ request }) => {
       return Response.json({ error: "Font file is too large. Maximum size is 5MB." }, { status: 400 });
     }
 
-    const fileExt = fontFile.name.split('.').pop();
+    const client = await getMongoClient();
+    const db = client.db('signage_customizer');
+    const bucket = new GridFSBucket(db, { bucketName: 'fonts' });
+
     const timestamp = Date.now();
     const sanitizedShop = shop.replace(/[^a-z0-9]/gi, '-');
-    const fileName = `${sanitizedShop}/${timestamp}-${fontFile.name.replace(/[^a-z0-9.-]/gi, '-')}`;
+    const fileName = `${sanitizedShop}-${timestamp}-${fontFile.name.replace(/[^a-z0-9.-]/gi, '-')}`;
 
     const arrayBuffer = await fontFile.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+    const buffer = Buffer.from(arrayBuffer);
 
-    const { data, error } = await supabase.storage
-      .from('font-files')
-      .upload(fileName, buffer, {
+    const uploadStream = bucket.openUploadStream(fileName, {
+      metadata: {
+        shop,
+        originalName: fontFile.name,
         contentType: fontFile.type || 'application/octet-stream',
-        upsert: false
+        uploadedAt: new Date()
+      }
+    });
+
+    await new Promise((resolve, reject) => {
+      uploadStream.end(buffer, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
       });
+    });
 
-    if (error) {
-      console.error('Supabase upload error:', error);
-      return Response.json({ error: `Failed to upload font file: ${error.message}` }, { status: 500 });
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('font-files')
-      .getPublicUrl(fileName);
+    const fileId = uploadStream.id.toString();
+    const fontFileUrl = `/api/font-file/${fileId}`;
 
     return Response.json({
       success: true,
-      fontFileUrl: urlData.publicUrl,
-      fontFileName: fontFile.name
+      fontFileUrl: fontFileUrl,
+      fontFileName: fontFile.name,
+      fileId: fileId
     });
 
   } catch (error) {
