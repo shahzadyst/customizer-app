@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Form } from "react-router";
+import { Form, useFetcher } from "react-router";
 import ColorForm, { COLOR_EFFECTS } from "./ColorForm";
 
 export default function ColorSettings({ colors }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const fetcher = useFetcher();
 
   const handleEditClick = (color) => {
     setEditingId(color._id.toString());
@@ -35,6 +37,36 @@ export default function ColorSettings({ colors }) {
     additionalPricing: color.additionalPricing || "none",
     basePrice: color.basePrice || ""
   });
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newOrder = colors.map(c => c._id.toString());
+    const [removed] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(dropIndex, 0, removed);
+
+    fetcher.submit(
+      { action: 'reorderColors', order: JSON.stringify(newOrder) },
+      { method: 'post' }
+    );
+
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
 
   return (
     <div>
@@ -118,10 +150,25 @@ export default function ColorSettings({ colors }) {
                   </td>
                 </tr>
               ) : (
-                colors.map((color) => (
-                  <tr key={color._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                colors.map((color, index) => (
+                  <tr
+                    key={color._id.toString()}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    style={{
+                      borderBottom: '1px solid #f0f0f0',
+                      cursor: 'move',
+                      opacity: draggedIndex === index ? 0.5 : 1,
+                      backgroundColor: draggedIndex === index ? '#f5f5f5' : 'transparent'
+                    }}
+                  >
                     <td style={{ padding: '16px' }}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ cursor: 'grab', color: '#999', fontSize: '18px' }}>⋮⋮</span>
+                        <div style={{ display: 'flex', gap: '4px' }}>
                         {(color.colors || [color.hex]).slice(0, 4).map((c, i) => (
                           <div key={i} style={{
                             width: '20px',
@@ -146,6 +193,7 @@ export default function ColorSettings({ colors }) {
                             +{(color.colors || [color.hex]).length - 4}
                           </div>
                         )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '16px' }}>

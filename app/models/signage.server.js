@@ -21,7 +21,7 @@ export async function getFonts(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const fonts = await db.collection(collections.fonts).find(query).toArray();
+  const fonts = await db.collection(collections.fonts).find(query).sort({ order: 1 }).toArray();
   return fonts.map(font => ({
     ...font,
     _id: font._id.toString()
@@ -64,7 +64,7 @@ export async function getColors(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const colors = await db.collection(collections.colors).find(query).toArray();
+  const colors = await db.collection(collections.colors).find(query).sort({ order: 1 }).toArray();
   return colors.map(color => ({
     ...color,
     _id: color._id.toString()
@@ -102,12 +102,28 @@ export async function deleteColor(shop, colorId) {
   return result;
 }
 
+export async function reorderColors(shop, orderedIds, customizerId = null) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.colors).bulkWrite(bulkOps);
+  }
+}
+
 export async function getSizes(shop, customizerId = null) {
   const db = await getDb();
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const sizes = await db.collection(collections.sizes).find(query).toArray();
+  const sizes = await db.collection(collections.sizes).find(query).sort({ order: 1 }).toArray();
   return sizes.map(size => ({
     ...size,
     _id: size._id.toString()
@@ -150,7 +166,7 @@ export async function getUsageTypes(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const types = await db.collection(collections.usageTypes).find(query).toArray();
+  const types = await db.collection(collections.usageTypes).find(query).sort({ order: 1 }).toArray();
   return types.map(type => ({
     ...type,
     _id: type._id.toString()
@@ -193,7 +209,7 @@ export async function getAcrylicShapes(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const shapes = await db.collection(collections.acrylicShapes).find(query).toArray();
+  const shapes = await db.collection(collections.acrylicShapes).find(query).sort({ order: 1 }).toArray();
   return shapes.map(shape => ({
     ...shape,
     _id: shape._id.toString()
@@ -236,7 +252,7 @@ export async function getBackboardColors(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const colors = await db.collection(collections.backboardColors).find(query).toArray();
+  const colors = await db.collection(collections.backboardColors).find(query).sort({ order: 1 }).toArray();
   return colors.map(color => ({
     ...color,
     _id: color._id.toString()
@@ -279,7 +295,7 @@ export async function getHangingOptions(shop, customizerId = null) {
   const query = customizerId
     ? { shop, $or: [{ customizerId }, { customizerId: null }] }
     : { shop };
-  const options = await db.collection(collections.hangingOptions).find(query).toArray();
+  const options = await db.collection(collections.hangingOptions).find(query).sort({ order: 1 }).toArray();
   return options;
 }
 
@@ -374,4 +390,100 @@ export async function deletePricing(shop, pricingId) {
     shop,
   });
   return result;
+}
+
+export async function reorderFonts(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.fonts).bulkWrite(bulkOps);
+  }
+}
+
+export async function reorderSizes(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.sizes).bulkWrite(bulkOps);
+  }
+}
+
+export async function reorderUsageTypes(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.usageTypes).bulkWrite(bulkOps);
+  }
+}
+
+export async function reorderAcrylicShapes(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.acrylicShapes).bulkWrite(bulkOps);
+  }
+}
+
+export async function reorderBackboardColors(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.backboardColors).bulkWrite(bulkOps);
+  }
+}
+
+export async function reorderHangingOptions(shop, orderedIds) {
+  const db = await getDb();
+  const { ObjectId } = await import('mongodb');
+
+  const bulkOps = orderedIds.map((id, index) => ({
+    updateOne: {
+      filter: { _id: new ObjectId(id), shop },
+      update: { $set: { order: index } }
+    }
+  }));
+
+  if (bulkOps.length > 0) {
+    await db.collection(collections.hangingOptions).bulkWrite(bulkOps);
+  }
 }

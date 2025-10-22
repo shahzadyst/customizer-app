@@ -7,30 +7,37 @@ import {
   addFont,
   updateFont,
   deleteFont,
+  reorderFonts,
   getColors,
   addColor,
   updateColor,
   deleteColor,
+  reorderColors,
   getSizes,
   addSize,
   updateSize,
   deleteSize,
+  reorderSizes,
   getUsageTypes,
   addUsageType,
   updateUsageType,
   deleteUsageType,
+  reorderUsageTypes,
   getAcrylicShapes,
   addAcrylicShape,
   updateAcrylicShape,
   deleteAcrylicShape,
+  reorderAcrylicShapes,
   getBackboardColors,
   addBackboardColor,
   updateBackboardColor,
   deleteBackboardColor,
+  reorderBackboardColors,
   getHangingOptions,
   addHangingOption,
   updateHangingOption,
   deleteHangingOption,
+  reorderHangingOptions,
   getPricings,
 } from "../models/signage.server";
 
@@ -171,6 +178,12 @@ export const action = async ({ request, params }) => {
         return { success: true };
       }
 
+      case "reorderColors": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderColors(shop, order, customizerId);
+        return { success: true };
+      }
+
       case "addSize": {
         await addSize(shop, {
           label: formData.get("label"),
@@ -279,6 +292,42 @@ export const action = async ({ request, params }) => {
 
       case "deleteHangingOption": {
         await deleteHangingOption(shop, formData.get("id"));
+        return { success: true };
+      }
+
+      case "reorderFonts": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderFonts(shop, order);
+        return { success: true };
+      }
+
+      case "reorderSizes": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderSizes(shop, order);
+        return { success: true };
+      }
+
+      case "reorderUsageTypes": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderUsageTypes(shop, order);
+        return { success: true };
+      }
+
+      case "reorderAcrylicShapes": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderAcrylicShapes(shop, order);
+        return { success: true };
+      }
+
+      case "reorderBackboardColors": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderBackboardColors(shop, order);
+        return { success: true };
+      }
+
+      case "reorderHangingOptions": {
+        const order = JSON.parse(formData.get("order"));
+        await reorderHangingOptions(shop, order);
         return { success: true };
       }
 
