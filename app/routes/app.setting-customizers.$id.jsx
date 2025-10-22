@@ -123,6 +123,9 @@ export const action = async ({ request, params }) => {
           pricingId: formData.get("pricingId") || null,
           minHeightSmallest: formData.get("minHeightSmallest") ? parseFloat(formData.get("minHeightSmallest")) : null,
           minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
+          fontFileUrl: formData.get("fontFileUrl") || null,
+          fontFileName: formData.get("fontFileName") || null,
+          isCustomFont: formData.get("isCustomFont") === "true",
         }, customizerId);
         return { success: true };
       }
@@ -134,6 +137,9 @@ export const action = async ({ request, params }) => {
           pricingId: formData.get("pricingId") || null,
           minHeightSmallest: formData.get("minHeightSmallest") ? parseFloat(formData.get("minHeightSmallest")) : null,
           minHeightUppercase: formData.get("minHeightUppercase") ? parseFloat(formData.get("minHeightUppercase")) : null,
+          fontFileUrl: formData.get("fontFileUrl") || null,
+          fontFileName: formData.get("fontFileName") || null,
+          isCustomFont: formData.get("isCustomFont") === "true",
         });
         return { success: true };
       }

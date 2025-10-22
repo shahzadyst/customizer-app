@@ -24,11 +24,15 @@ export default function FontSettings({ fonts, pricings = [] }) {
     fontFamily: "",
     pricingId: "",
     minHeightSmallest: "",
-    minHeightUppercase: ""
+    minHeightUppercase: "",
+    fontFileUrl: "",
+    fontFileName: "",
+    isCustomFont: false
   });
   const [editFont, setEditFont] = useState({});
   const [errors, setErrors] = useState({});
   const [loadedFonts, setLoadedFonts] = useState(new Set());
+  const [uploadingFont, setUploadingFont] = useState(false);
 
   const validateFont = (name, fontFamily) => {
     const errors = {};
@@ -74,7 +78,10 @@ export default function FontSettings({ fonts, pricings = [] }) {
       fontFamily: "",
       pricingId: "",
       minHeightSmallest: "",
-      minHeightUppercase: ""
+      minHeightUppercase: "",
+      fontFileUrl: "",
+      fontFileName: "",
+      isCustomFont: false
     });
     setShowAddForm(false);
   };
@@ -176,22 +183,39 @@ export default function FontSettings({ fonts, pricings = [] }) {
                   textAlign: 'center',
                   background: '#fafafa'
                 }}>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => document.getElementById('font-file-upload').click()}
+                      disabled={uploadingFont}
                       style={{
                         padding: '8px 16px',
                         background: 'white',
                         border: '1px solid #ddd',
                         borderRadius: '4px',
-                        cursor: 'pointer',
+                        cursor: uploadingFont ? 'not-allowed' : 'pointer',
                         fontSize: '14px',
-                        fontWeight: 500
+                        fontWeight: 500,
+                        opacity: uploadingFont ? 0.6 : 1
                       }}
                     >
-                      Add file
+                      {uploadingFont ? 'Uploading...' : 'Add file'}
                     </button>
+                    {newFont.fontFileName && !uploadingFont && (
+                      <div style={{
+                        padding: '6px 12px',
+                        background: '#e8f5e9',
+                        color: '#2e7d32',
+                        borderRadius: '4px',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <span>✓</span>
+                        <span>{newFont.fontFileName}</span>
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={() => setShowGoogleFontsModal(true)}
@@ -220,9 +244,40 @@ export default function FontSettings({ fonts, pricings = [] }) {
                     type="file"
                     accept=".ttf"
                     style={{ display: 'none' }}
-                    onChange={(e) => {
-                      if (e.target.files[0]) {
-                        alert('Font file upload will be implemented. For now, please use Google Fonts or enter font family manually.');
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setUploadingFont(true);
+                        try {
+                          const formData = new FormData();
+                          formData.append('fontFile', file);
+
+                          const response = await fetch('/api/upload-font', {
+                            method: 'POST',
+                            body: formData
+                          });
+
+                          const result = await response.json();
+
+                          if (result.success) {
+                            const fontName = file.name.replace(/\.[^/.]+$/, '');
+                            setNewFont({
+                              ...newFont,
+                              name: fontName,
+                              fontFamily: fontName,
+                              fontFileUrl: result.fontFileUrl,
+                              fontFileName: result.fontFileName,
+                              isCustomFont: true
+                            });
+                          } else {
+                            alert('Failed to upload font: ' + (result.error || 'Unknown error'));
+                          }
+                        } catch (error) {
+                          console.error('Font upload error:', error);
+                          alert('Failed to upload font file. Please try again.');
+                        } finally {
+                          setUploadingFont(false);
+                        }
                       }
                     }}
                   />
@@ -346,8 +401,14 @@ export default function FontSettings({ fonts, pricings = [] }) {
                 </div>
               </div>
 
+              <input type="hidden" name="fontFileUrl" value={newFont.fontFileUrl} />
+              <input type="hidden" name="fontFileName" value={newFont.fontFileName} />
+              <input type="hidden" name="isCustomFont" value={newFont.isCustomFont} />
+
               <div style={{ display: 'flex', gap: '8px' }}>
-                <s-button type="submit" variant="primary">Save Font</s-button>
+                <s-button type="submit" variant="primary" disabled={uploadingFont}>
+                  {uploadingFont ? 'Uploading...' : 'Save Font'}
+                </s-button>
                 <s-button type="button" onClick={() => setShowAddForm(false)} variant="secondary">Cancel</s-button>
               </div>
             </s-stack>
@@ -620,10 +681,31 @@ export default function FontSettings({ fonts, pricings = [] }) {
                 return (
                   <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
                     <td style={{ padding: '16px' }}>
-                      <s-text weight="semibold">{font.name}</s-text>
+                      <div>
+                        <s-text weight="semibold">{font.name}</s-text>
+                        {font.isCustomFont && (
+                          <div style={{
+                            display: 'inline-block',
+                            marginLeft: '8px',
+                            padding: '2px 8px',
+                            background: '#e3f2fd',
+                            color: '#1976d2',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600
+                          }}>
+                            CUSTOM
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: '16px' }}>
                       <s-text color="subdued">{font.fontFamily}</s-text>
+                      {font.fontFileName && (
+                        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                          {font.fontFileName}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '16px' }}>
                       <s-text color="subdued">{pricing ? pricing.name : '-'}</s-text>
