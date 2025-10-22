@@ -1,4 +1,3 @@
-import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 import { supabase } from "../supabase.server";
 
@@ -11,7 +10,7 @@ export const action = async ({ request }) => {
     const fontFile = formData.get("fontFile");
 
     if (!fontFile || !(fontFile instanceof File)) {
-      return json({ error: "No font file provided" }, { status: 400 });
+      return Response.json({ error: "No font file provided" }, { status: 400 });
     }
 
     const allowedTypes = [
@@ -25,12 +24,12 @@ export const action = async ({ request }) => {
     ];
 
     if (!allowedTypes.includes(fontFile.type) && !fontFile.name.match(/\.(ttf|otf|woff|woff2)$/i)) {
-      return json({ error: "Invalid font file type. Only TTF, OTF, WOFF, and WOFF2 files are allowed." }, { status: 400 });
+      return Response.json({ error: "Invalid font file type. Only TTF, OTF, WOFF, and WOFF2 files are allowed." }, { status: 400 });
     }
 
     const maxSize = 5 * 1024 * 1024;
     if (fontFile.size > maxSize) {
-      return json({ error: "Font file is too large. Maximum size is 5MB." }, { status: 400 });
+      return Response.json({ error: "Font file is too large. Maximum size is 5MB." }, { status: 400 });
     }
 
     const fileExt = fontFile.name.split('.').pop();
@@ -50,14 +49,14 @@ export const action = async ({ request }) => {
 
     if (error) {
       console.error('Supabase upload error:', error);
-      return json({ error: `Failed to upload font file: ${error.message}` }, { status: 500 });
+      return Response.json({ error: `Failed to upload font file: ${error.message}` }, { status: 500 });
     }
 
     const { data: urlData } = supabase.storage
       .from('font-files')
       .getPublicUrl(fileName);
 
-    return json({
+    return Response.json({
       success: true,
       fontFileUrl: urlData.publicUrl,
       fontFileName: fontFile.name
@@ -65,6 +64,6 @@ export const action = async ({ request }) => {
 
   } catch (error) {
     console.error('Font upload error:', error);
-    return json({ error: error.message || "Failed to upload font file" }, { status: 500 });
+    return Response.json({ error: error.message || "Failed to upload font file" }, { status: 500 });
   }
 };
