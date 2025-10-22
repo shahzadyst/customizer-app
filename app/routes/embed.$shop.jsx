@@ -11,11 +11,17 @@ export const loader = async ({ params, request }) => {
   const SHOP_DOMAIN = '${shop}';
   const scriptTag = document.currentScript || document.querySelector('script[src*="embed"]');
   const customizerId = scriptTag ? scriptTag.getAttribute('data-customizer-id') : null;
-  const LoaderDiv = document.querySelector('#sign-customizer-' + customizerId); 
+  const LoaderDiv = document.querySelector('#sign-customizer-' + customizerId);
 
   let apiUrl = '${appUrl}/api/config/' + SHOP_DOMAIN;
   if (customizerId) apiUrl += '?customizerId=' + customizerId;
   const API_URL = apiUrl;
+
+  // Load custom fonts CSS
+  const fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = '${appUrl}/api/fonts/' + SHOP_DOMAIN;
+  document.head.appendChild(fontLink);
 
   let config = null;
   let currentSelection = {
