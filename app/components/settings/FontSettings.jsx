@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "react-router";
-
+import { useDragReorder } from '../hooks/useDragReorder';
 const POPULAR_GOOGLE_FONTS = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
   "Raleway", "PT Sans", "Merriweather", "Ubuntu", "Playfair Display",
@@ -120,11 +120,30 @@ export default function FontSettings({ fonts, pricings = [] }) {
   const filteredFonts = POPULAR_GOOGLE_FONTS.filter(font =>
     font.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
+  const { getDragProps, getDragHandleIcon, MessageComponent, isLoading } = useDragReorder(
+    fonts,
+    (newOrder) => {
+      return fetcher.submit(
+        { action: 'reorderFonts', order: JSON.stringify(newOrder) },
+        { method: 'post' }
+      );
+    },
+    {
+      successMessage: 'Font order updated! 🎨',
+      onSuccess: (newOrder) => {
+        console.log('New order:', newOrder);
+        // Additional actions on success
+      },
+      onError: (error) => {
+        console.error('Reorder failed:', error);
+        // Handle error
+      }
+    }
+  );
   useEffect(() => {
     filteredFonts.slice(0, 20).forEach(font => loadGoogleFont(font));
   }, [searchQuery]);
-
+  
   return (
     <div>
       <div style={{
@@ -531,6 +550,8 @@ export default function FontSettings({ fonts, pricings = [] }) {
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Font Name</th>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Font Family</th>
               <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600 }}>Pricing</th>
+              <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600 }}>Min Height(Lower case)</th>
+              <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600 }}>Min Height(Uppercase case)</th>
               <th style={{ padding: '16px', textAlign: 'right', fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
@@ -542,11 +563,18 @@ export default function FontSettings({ fonts, pricings = [] }) {
                 </td>
               </tr>
             ) : (
-              fonts.map((font) => {
+              fonts.map((font,index) => {
                 const pricing = pricings.find(p => p._id.toString() === font.pricingId);
                 if (editingId === font._id.toString()) {
                   return (
-                    <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0', background: '#f9f9f9' }}>
+                    <tr
+                      key={font._id.toString()}
+                      {...getDragProps(index)}
+                      style={{
+                        ...getDragProps(index).style,  // Keep drag styles
+                        borderBottom: '1px solid #f0f0f0'  // Add your custom styles
+                      }}
+                    >
                       <td colSpan="4" style={{ padding: '16px' }}>
                         <fetcher.Form method="post" onSubmit={handleUpdateFont}>
                           <input type="hidden" name="action" value="updateFont" />
@@ -683,24 +711,34 @@ export default function FontSettings({ fonts, pricings = [] }) {
                   );
                 }
                 return (
-                  <tr key={font._id.toString()} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <tr
+                      key={font._id.toString()}
+                      {...getDragProps(index)}
+                      style={{
+                        ...getDragProps(index).style,  // Keep drag styles
+                        borderBottom: '1px solid #f0f0f0'  // Add your custom styles
+                      }}
+                    >
                     <td style={{ padding: '16px' }}>
-                      <div>
-                        <s-text weight="semibold">{font.name}</s-text>
-                        {font.isCustomFont && (
-                          <div style={{
-                            display: 'inline-block',
-                            marginLeft: '8px',
-                            padding: '2px 8px',
-                            background: '#e3f2fd',
-                            color: '#1976d2',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontWeight: 600
-                          }}>
-                            CUSTOM
-                          </div>
-                        )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ cursor: 'grab', color: '#999', fontSize: '18px' }}>⋮⋮</span>
+                        <div>
+                          <s-text weight="semibold">{font.name}</s-text>
+                          {font.isCustomFont && (
+                            <div style={{
+                              display: 'inline-block',
+                              marginLeft: '8px',
+                              padding: '2px 8px',
+                              background: '#e3f2fd',
+                              color: '#1976d2',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 600
+                            }}>
+                              CUSTOM
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '16px' }}>
@@ -713,6 +751,12 @@ export default function FontSettings({ fonts, pricings = [] }) {
                     </td>
                     <td style={{ padding: '16px' }}>
                       <s-text color="subdued">{pricing ? pricing.name : '-'}</s-text>
+                    </td>
+                    <td style={{ padding: '16px',textAlign: 'center', }}>
+                      <s-text color="subdued">{font.minHeightSmallest}</s-text>
+                    </td>
+                    <td style={{ padding: '16px',textAlign: 'center', }}>
+                      <s-text color="subdued">{font.minHeightUppercase}</s-text>
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
