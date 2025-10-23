@@ -378,7 +378,7 @@ export default function CustomizerSettings() {
   const renderSection = () => {
     switch (currentSection) {
       case "fonts":
-        return <FontSettings fonts={options.fonts} pricings={pricings} />;
+        return <FontSettings fonts={options.fonts} pricings={pricings} customizerId={customizer.customizerId} />;
       case "colors":
         return <ColorSettings colors={options.colors} />;
       case "sizes":
@@ -394,7 +394,7 @@ export default function CustomizerSettings() {
       case "hangingOptions":
         return <HangingOptionSettings hangingOptions={options.hangingOptions} />;
       default:
-        return <FontSettings fonts={options.fonts} pricings={pricings} />;
+        return <FontSettings fonts={options.fonts} pricings={pricings} customizerId={customizer.customizerId} />;
     }
   };
 
