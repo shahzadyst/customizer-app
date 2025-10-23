@@ -164,6 +164,7 @@ export const useDragReorder = (items, onReorder, options = {}) => {
   ) : null;
 
   return {
+    items, // Return the items array for easy access
     draggedIndex,
     isLoading,
     message,

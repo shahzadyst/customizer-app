@@ -1,5 +1,7 @@
 import { getDb, collections } from '../mongodb.server.js';
 
+
+
 export async function getShopConfiguration(shop) {
   const db = await getDb();
   const config = await db.collection(collections.configurations).findOne({ shop });

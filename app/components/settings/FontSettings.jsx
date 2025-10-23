@@ -5,7 +5,7 @@ export default function FontSettings({ fonts, pricings = [], customizerId }) {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const { items: orderedFonts, getDragProps } = useDragReorder(
+  const { items: orderedFonts, getDragProps, MessageComponent } = useDragReorder(
     fonts,
     (newOrder) => {
       return fetcher.submit(
@@ -26,6 +26,8 @@ export default function FontSettings({ fonts, pricings = [], customizerId }) {
 
   return (
     <div>
+      {MessageComponent} {/* Add this to show success/error messages */}
+      
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',

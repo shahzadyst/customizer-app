@@ -36,6 +36,17 @@ export const action = async ({ request, params }) => {
 
   try {
     if (action === "save") {
+      // Parse metrics if available
+      let metrics = null;
+      const metricsString = formData.get("metrics");
+      if (metricsString && metricsString !== "null") {
+        try {
+          metrics = JSON.parse(metricsString);
+        } catch (e) {
+          console.error('Failed to parse metrics:', e);
+        }
+      }
+
       const fontData = {
         name: formData.get("name"),
         fontFamily: formData.get("fontFamily"),
@@ -46,6 +57,7 @@ export const action = async ({ request, params }) => {
         fontFileName: formData.get("fontFileName") || null,
         fileId: formData.get("fileId") || null,
         isCustomFont: formData.get("isCustomFont") === "true",
+        metrics: metrics // Save metrics to database
       };
 
       if (fontId) {
@@ -130,11 +142,19 @@ export default function FontFormPage() {
     setFormData({
       ...formData,
       name: fontFamily,
-      fontFamily: `'${fontFamily}', sans-serif`,
+      fontFamily: `'${fontFamily}'`,
       isCustomFont: false,
       fontFileUrl: "",
       fontFileName: "",
-      fileId: ""
+      fileId: "",
+      // Google fonts will use default metrics or can be measured client-side
+      metrics: {
+        capHeightRatio: 0.7,
+        xHeightRatio: 0.5,
+        cmToPxRatio: 37.795,
+        capHeightAt100px: 70,
+        xHeightAt100px: 50
+      }
     });
     setShowGoogleFontsModal(false);
   };
@@ -161,8 +181,18 @@ export default function FontFormPage() {
           fontFileUrl: result.fontFileUrl,
           fontFileName: result.fontFileName,
           fileId: result.fileId || '',
-          isCustomFont: true
+          isCustomFont: true,
+          metrics: result.metrics || null // Store extracted metrics
         });
+        
+        // Show success message with metrics info
+        if (result.metrics) {
+          console.log('Font metrics extracted:', {
+            capHeight: result.metrics.capHeightAt100px + 'px (at 100px)',
+            xHeight: result.metrics.xHeightAt100px + 'px (at 100px)',
+            ratio: (result.metrics.xHeightRatio / result.metrics.capHeightRatio).toFixed(2)
+          });
+        }
       } else {
         alert('Failed to upload font: ' + (result.error || 'Unknown error'));
       }
@@ -398,6 +428,7 @@ export default function FontFormPage() {
                 <input type="hidden" name="fontFileName" value={formData.fontFileName} />
                 <input type="hidden" name="fileId" value={formData.fileId} />
                 <input type="hidden" name="isCustomFont" value={formData.isCustomFont} />
+                <input type="hidden" name="metrics" value={JSON.stringify(formData.metrics)} />
 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <s-button type="submit" variant="primary" disabled={uploadingFont}>

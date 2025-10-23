@@ -285,7 +285,7 @@ export const loader = async ({ params, request }) => {
     ctx.clearRect(0, 0, displayWidth, displayHeight);
     
     const fontFamily = currentSelection.font?.fontFamily || 'Dancing Script';
-    const fontSize = 80;
+    const fontSize = 100;
     
     // Load font and render
     const fontString = 'bold ' + fontSize + 'px "' + fontFamily + '", cursive';
@@ -382,32 +382,52 @@ export const loader = async ({ params, request }) => {
     
     const font = currentSelection.font;
     const sizeMultiplier = currentSelection.size.multiplier;
-    const heightPerLine = (font.minHeightUppercase || 10) * sizeMultiplier;
     
-    // Calculate total height with spacing between lines
-    const lineSpacing = lines.length > 1 ? heightPerLine * 0.5 : 0;
-    const totalHeight = heightPerLine * lines.length + lineSpacing * (lines.length - 1);
+    // Check if line contains uppercase letters
+    function hasUppercase(text) {
+      return /[A-Z]/.test(text);
+    }
     
+    // Calculate height for each line based on character case
+    let lineHeights = [];
     let maxWidth = 0;
     
     lines.forEach(line => {
+      let lineHeight;
+      console.log(hasUppercase(line))
+      if (hasUppercase(line)) {
+        // Use uppercase height if line contains any uppercase letters
+        lineHeight = (font.minHeightUppercase || 10) * sizeMultiplier;
+      } else {
+        // Use lowercase height for lines with only lowercase letters
+        lineHeight = (font.minHeightLowercase || font.minHeightUppercase * 0.7 || 7) * sizeMultiplier;
+      }
+      console.log(lineHeight);
+      lineHeights.push(lineHeight);
+      
+      // Calculate width for this line
       let lineWidth = 0;
       for (let char of line) {
-        lineWidth += getActualCharacterLength(char, heightPerLine, font.fontFamily);
+        lineWidth += getActualCharacterLength(char, lineHeight, font.fontFamily);
       }
       maxWidth = Math.max(maxWidth, lineWidth);
+      console.log(maxWidth);
     });
     
+    // Calculate total height with spacing between lines
+    const totalHeight = lineHeights.reduce((sum, height) => sum + height, 0) + 
+                       (lines.length > 1 ? (lines.length - 1) * lineHeights[0] * 0.5 : 0);
+    
     // Convert cm to inches (1 inch = 2.54 cm)
-    const heightInInches = (totalHeight / 2.54).toFixed(0);
-    const widthInInches = (maxWidth / 2.54).toFixed(0);
+    const heightInInches = Math.ceil(totalHeight / 2.54);
+    const widthInInches = Math.ceil(maxWidth / 2.54);
     
     // Update height label and line
     const heightLabel = document.getElementById('height-label');
     const heightLine = document.getElementById('height-line');
     if (heightLabel) heightLabel.textContent = heightInInches + 'in';
     if (heightLine) {
-      const displayHeight = Math.min(200, totalHeight * 10);
+      const displayHeight = Math.min(150, totalHeight * 10);
       heightLine.style.height = displayHeight + 'px';
     }
     
@@ -432,8 +452,9 @@ export const loader = async ({ params, request }) => {
       width: maxWidth,
       height: totalHeight,
       numberOfLines: lines.length,
-      heightInInches: parseFloat(heightInInches),
-      widthInInches: parseFloat(widthInInches)
+      heightInInches: heightInInches,
+      widthInInches: widthInInches,
+      lineHeights: lineHeights
     };
   }
 
@@ -854,9 +875,11 @@ export const loader = async ({ params, request }) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const measurementFontSize = 1000;
-    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}", cursive\`;
+    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
     const metrics = ctx.measureText(char);
+    console.log(metrics);
     const pixelWidth = (metrics.actualBoundingBoxRight || 0) + (metrics.actualBoundingBoxLeft || 0);
+    console.log('--->Pixel Width'+pixelWidth);
     const charWidth = pixelWidth || metrics.width;
     const widthToHeightRatio = charWidth / measurementFontSize;
     return heightInCm * widthToHeightRatio;
