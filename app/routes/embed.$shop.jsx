@@ -156,7 +156,7 @@ export const loader = async ({ params, request }) => {
           <!-- Color Selection -->
           <div>
             <label style="font-size:13px; font-weight:500; color:#aaa;">Color</label>
-            <div id="color-list" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px;"></div>
+            <div id="color-list" style="display:flex; flex-wrap: wrap; gap:8px; margin-top:8px;"></div>
           </div>
 
           <!-- Size Selection -->
@@ -388,14 +388,12 @@ export const loader = async ({ params, request }) => {
     const lineSpacing = lines.length > 1 ? heightPerLine * 0.5 : 0;
     const totalHeight = heightPerLine * lines.length + lineSpacing * (lines.length - 1);
     
-    // Calculate width for all lines and take the maximum
-    const fontString = 'bold 100px "' + font.fontFamily + '"';
     let maxWidth = 0;
     
     lines.forEach(line => {
       let lineWidth = 0;
       for (let char of line) {
-        lineWidth += getLetterWidth(char, heightPerLine, sizeMultiplier, fontString);
+        lineWidth += getActualCharacterLength(char, heightPerLine, font.fontFamily);
       }
       maxWidth = Math.max(maxWidth, lineWidth);
     });
@@ -549,6 +547,7 @@ export const loader = async ({ params, request }) => {
       const div = document.createElement('div');
       div.style.cssText = \`
         height:50px;
+        width:50px;
         border:2px solid #333;
         border-radius:6px;
         cursor:pointer;
@@ -790,7 +789,7 @@ export const loader = async ({ params, request }) => {
     }
 
     const allText = currentSelection.customText || 'Your Text';
-    const lines = allText.split('\\n').filter(line => line.trim().length > 0);
+    const lines = allText.split('\\\\n').filter(line => line.trim().length > 0);
     
     if (lines.length === 0) {
       lines.push('Your Text');
@@ -808,7 +807,6 @@ export const loader = async ({ params, request }) => {
     let totalPrice = 0;
 
     if (pricing.letterPricingType === 'fixed') {
-      // Calculate total characters across all lines
       const totalLetterCount = lines.reduce((sum, line) => sum + line.length, 0);
       let boundary = pricing.sizeBoundaries?.[0];
       
@@ -821,22 +819,22 @@ export const loader = async ({ params, request }) => {
       const height = (font.minHeightUppercase || 10) * sizeMultiplier;
       
       let boundary = pricing.sizeBoundaries?.[0];
-      const materialPrice = parseFloat(boundary?.materialPrice || 0);
+      const pricePerCm = parseFloat(boundary?.materialPrice || 0); // This should be price per cm
       const signStartPrice = parseFloat(boundary?.signStartPrice || 0);
       
-      const fontString = 'bold 100px "' + font.fontFamily + '"';
+      // Calculate length for each character
+      let totalLengthInCm = 0;
       
-      // Calculate total length for all lines
-      let totalLength = 0;
       lines.forEach(line => {
-        let lineLength = 0;
         for (let char of line) {
-          lineLength += getLetterWidth(char, height, sizeMultiplier, fontString);
+          // Get actual rendered width for this character
+          const charLength = getActualCharacterLength(char, height, font.fontFamily);
+          totalLengthInCm += charLength;
         }
-        totalLength += lineLength;
       });
       
-      totalPrice = signStartPrice + (totalLength * materialPrice);
+      // Formula: Length * Price per cm
+      totalPrice = signStartPrice + (totalLengthInCm * pricePerCm);
     }
 
     // Add additional pricing
@@ -851,6 +849,17 @@ export const loader = async ({ params, request }) => {
     }
 
     updatePrice(totalPrice);
+  }
+  function getActualCharacterLength(char, heightInCm, fontFamily) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const measurementFontSize = 1000;
+    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}", cursive\`;
+    const metrics = ctx.measureText(char);
+    const pixelWidth = (metrics.actualBoundingBoxRight || 0) + (metrics.actualBoundingBoxLeft || 0);
+    const charWidth = pixelWidth || metrics.width;
+    const widthToHeightRatio = charWidth / measurementFontSize;
+    return heightInCm * widthToHeightRatio;
   }
 
   function updatePrice(price) {
