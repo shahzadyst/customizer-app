@@ -44,6 +44,201 @@ export const loader = async ({ params, request }) => {
     '#ea5455', '#f07b3f', '#ffd460', '#2bcbba', '#4a90e2'
   ];
 
+  // ============================================
+  // NEW: Canvas-based measurement functions
+  // ============================================
+  
+  /**
+   * Get actual character width using canvas measurement
+   */
+  function getActualCharacterLength(char, heightInCm, fontFamily) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const measurementFontSize = 1000;
+    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
+    const metrics = ctx.measureText(char);
+    
+    const pixelWidth = (metrics.actualBoundingBoxRight || 0) + (metrics.actualBoundingBoxLeft || 0);
+    const charWidth = pixelWidth || metrics.width;
+    const widthToHeightRatio = charWidth / measurementFontSize;
+    return heightInCm * widthToHeightRatio;
+  }
+
+  /**
+   * Calculate text dimensions with uppercase/lowercase handling
+   */
+  function calculateTextDimensions(text, font, sizeMultiplier) {
+    const lines = text.split('\\n').filter(line => line.trim().length > 0);
+    
+    if (lines.length === 0 || !font) {
+      return { 
+        widthCm: 0, 
+        heightCm: 0, 
+        widthIn: 0, 
+        heightIn: 0, 
+        numberOfLines: 0,
+        lineHeights: []
+      };
+    }
+    
+    // Check if line has uppercase letters
+    const hasUppercase = (text) => /[A-Z]/.test(text);
+    
+    let lineHeights = [];
+    let maxWidth = 0;
+    let hasAnyUppercase = false;
+    
+    lines.forEach(line => {
+      let lineHeight;
+      if (hasUppercase(line)) {
+        lineHeight = (font.minHeightUppercase || 10) * sizeMultiplier;
+        hasAnyUppercase = true;
+      } else {
+        lineHeight = (font.minHeightLowercase || font.minHeightUppercase * 0.7 || 7) * sizeMultiplier;
+      }
+      
+      lineHeights.push(lineHeight);
+      
+      // Calculate DISPLAY width for this line
+      let lineWidth = 0;
+      for (let char of line) {
+        lineWidth += getActualCharacterWidth(char, lineHeight, font.fontFamily);
+      }
+      maxWidth = Math.max(maxWidth, lineWidth);
+    });
+    
+    // Different vertical padding for uppercase vs lowercase
+    const VERTICAL_PADDING_UPPERCASE = 1.35; // 35% padding for uppercase
+    const VERTICAL_PADDING_LOWERCASE = 1.15; // 15% padding for lowercase
+    
+    const VERTICAL_PADDING_MULTIPLIER = hasAnyUppercase 
+      ? VERTICAL_PADDING_UPPERCASE 
+      : VERTICAL_PADDING_LOWERCASE;
+    
+    // Line spacing
+    const LINE_SPACING_RATIO = 0.35;
+    const avgLineHeight = lineHeights.reduce((sum, h) => sum + h, 0) / lineHeights.length;
+    const lineSpacing = avgLineHeight * LINE_SPACING_RATIO;
+    
+    // Calculate total height with spacing
+    const totalTextHeight = lineHeights.reduce((sum, height) => sum + height, 0) + 
+                          (lines.length > 1 ? (lines.length - 1) * lineSpacing : 0);
+    
+    // Add vertical padding
+    const totalHeight = totalTextHeight * VERTICAL_PADDING_MULTIPLIER;
+    
+    // Add horizontal padding (minimum 2cm on each side for mounting)
+    const HORIZONTAL_PADDING_CM = 4; // 2cm each side
+    const totalWidth = maxWidth + HORIZONTAL_PADDING_CM;
+    
+    // Round up to whole inches
+    const heightInInches = Math.ceil(totalHeight / 2.54);
+    const widthInInches = Math.ceil(totalWidth / 2.54);
+    
+    return {
+      widthCm: totalWidth,
+      heightCm: totalHeight,
+      widthIn: widthInInches,
+      heightIn: heightInInches,
+      numberOfLines: lines.length,
+      lineHeights: lineHeights
+    };
+  }
+  function getActualCharacterWidth(char, heightInCm, fontFamily) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const measurementFontSize = 1000;
+    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
+    const metrics = ctx.measureText(char);
+    
+    // Use the full width metric which includes spacing
+    const charWidth = metrics.width;
+    
+    // Calculate base ratio
+    const widthToHeightRatio = charWidth / measurementFontSize;
+    
+    // CRITICAL: Add spacing multiplier for physical neon sign spacing
+    // Neon signs need ~25-30% extra space for mounting, wiring, and visual spacing
+    const NEON_SPACING_MULTIPLIER = 1.3;
+    
+    return heightInCm * widthToHeightRatio * NEON_SPACING_MULTIPLIER;
+  }
+  
+  function findSizeBoundary(widthCm, heightCm, sizeBoundaries) {
+    if (!sizeBoundaries || sizeBoundaries.length === 0) {
+      return null;
+    }
+    
+    // Sort boundaries by maxWidth to ensure we check from smallest to largest
+    const sortedBoundaries = [...sizeBoundaries].sort((a, b) => {
+      const aWidth = parseFloat(a.maxWidth || Infinity);
+      const bWidth = parseFloat(b.maxWidth || Infinity);
+      return aWidth - bWidth;
+    });
+    
+    // Find first boundary where sign fits within BOTH width AND height
+    for (let boundary of sortedBoundaries) {
+      const maxWidth = parseFloat(boundary.maxWidth || Infinity);
+      const maxHeight = parseFloat(boundary.maxHeight || Infinity);
+      
+      if (widthCm <= maxWidth && heightCm <= maxHeight) {
+        return boundary;
+      }
+    }
+    
+    // If no boundary fits, use the last one (infinity rule)
+    return sortedBoundaries[sortedBoundaries.length - 1];
+  }
+  function calculateMaterialBasedPrice(text, font, sizeMultiplier, pricing) {
+    const lines = text.split('\\n').filter(line => line.trim().length > 0);
+    const hasUppercase = (text) => /[A-Z]/.test(text);
+    
+    // Get sign dimensions to find appropriate size boundary
+    const dimensions = calculateTextDimensions(text, font, sizeMultiplier);
+    const sizeBoundary = findSizeBoundary(dimensions.widthCm, dimensions.heightCm, pricing.sizeBoundaries);
+    
+    if (!sizeBoundary) {
+      return 0;
+    }
+    
+    const materialPricePerCm = parseFloat(sizeBoundary.materialPrice || 0);
+    const signStartPrice = parseFloat(sizeBoundary.signStartPrice || 0);
+    
+    // Calculate total MATERIAL length (cutting path) for all characters
+    let totalMaterialLength = 0;
+    
+    lines.forEach(line => {
+      // Get height for this line
+      const lineHasUppercase = hasUppercase(line);
+      const lineHeight = lineHasUppercase 
+        ? (font.minHeightUppercase || 10) * sizeMultiplier
+        : (font.minHeightLowercase || (font.minHeightUppercase || 10) * 0.7) * sizeMultiplier;
+      
+      // Calculate material length for each character
+      for (let char of line) {
+        const charMaterialLength = getMaterialLength(char, lineHeight, font.fontFamily);
+        totalMaterialLength += charMaterialLength;
+      }
+    });
+    
+    // Total price = Start Price + (Total Material Length × Price per cm)
+    const totalPrice = signStartPrice + (totalMaterialLength * materialPricePerCm);
+    
+    return totalPrice;
+  } 
+  function calculateFixedPricePerLetter(text, pricing) {
+    const lines = text.split('\\n').filter(line => line.trim().length > 0);
+    const totalLetterCount = lines.reduce((sum, line) => sum + line.length, 0);
+    
+    const sizeBoundary = pricing.sizeBoundaries?.[0];
+    if (!sizeBoundary) return 0;
+    
+    const pricePerLetter = parseFloat(sizeBoundary.pricePerLetter || 0);
+    const signStartPrice = parseFloat(sizeBoundary.signStartPrice || 0);
+    
+    return signStartPrice + (totalLetterCount * pricePerLetter);
+  }
+  
   async function loadConfig() {
     try {
       const response = await fetch(API_URL);
@@ -97,30 +292,8 @@ export const loader = async ({ params, request }) => {
 
           <!-- Canvas Preview -->
           <div style="text-align:center; position:relative; z-index:1; display:inline-block;">
-            <div style="position:relative; display:inline-block;">
-              <!-- Height indicator (left side) -->
-              <div id="height-indicator" style="position:absolute; left:-60px; top:50%; transform:translateY(-50%); display:flex; align-items:center;">
-                <div style="writing-mode:vertical-rl; transform:rotate(180deg); color:rgba(255,255,255,0.7); font-size:12px; margin-right:8px;" id="height-label">9in</div>
-                <div style="width:2px; height:100px; background:rgba(255,0,0,0.8); position:relative;" id="height-line">
-                  <div style="position:absolute; top:-4px; left:-3px; width:8px; height:8px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; bottom:-4px; left:-3px; width:8px; height:8px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; top:0; left:2px; width:15px; height:2px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; bottom:0; left:2px; width:15px; height:2px; background:rgba(255,0,0,0.8);"></div>
-                </div>
-              </div>
-              
+            <div style="position:relative; display:inline-block;">              
               <canvas id="preview-canvas" width="900" height="400" style="max-width:90%; display:block;"></canvas>
-              
-              <!-- Width indicator (bottom) -->
-              <div id="width-indicator" style="position:absolute; bottom:-50px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; width:80%;">
-                <div style="height:2px; background:rgba(255,0,0,0.8); position:relative; width:100%;" id="width-line">
-                  <div style="position:absolute; left:-4px; top:-3px; width:8px; height:8px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; right:-4px; top:-3px; width:8px; height:8px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; left:0; top:2px; width:2px; height:15px; background:rgba(255,0,0,0.8);"></div>
-                  <div style="position:absolute; right:0; top:2px; width:2px; height:15px; background:rgba(255,0,0,0.8);"></div>
-                </div>
-                <div style="color:rgba(255,255,255,0.7); font-size:12px; margin-top:8px;" id="width-label">24in</div>
-              </div>
             </div>
             <p style="color:rgba(255,255,255,0.6); font-size:11px; margin-top:60px;">Colours may appear different in real life</p>
           </div>
@@ -263,13 +436,13 @@ export const loader = async ({ params, request }) => {
     renderCanvas();
   }
 
-  function renderCanvas() {
+  function renderCanvas() {  // Remove (currentSelection, config) parameters
     const canvas = document.getElementById('preview-canvas');
     const previewContainer = document.getElementById('preview-container');
     if (!canvas) return;
     
     // Update background
-    previewContainer.style.background = currentSelection.background;
+    previewContainer.style.background = currentSelection.background;  // Add this back
     
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -287,12 +460,10 @@ export const loader = async ({ params, request }) => {
     const fontFamily = currentSelection.font?.fontFamily || 'Dancing Script';
     const fontSize = 100;
     
-    // Load font and render
     const fontString = 'bold ' + fontSize + 'px "' + fontFamily + '", cursive';
     const fontLoadPromise = document.fonts ? document.fonts.load(fontString) : Promise.resolve();
     
     fontLoadPromise.then(() => {
-      // Clear again before rendering
       ctx.clearRect(0, 0, displayWidth, displayHeight);
       
       ctx.font = fontString;
@@ -310,155 +481,224 @@ export const loader = async ({ params, request }) => {
       const totalHeight = lines.length * fontSize + (lines.length - 1) * (lineHeight - fontSize);
       const startY = displayHeight / 2 - totalHeight / 2 + fontSize / 2;
       
-      const renderColor = getCurrentRenderColor();
+      const renderColor = getCurrentRenderColor();  // Remove currentSelection parameter
       
+      // Render text
       lines.forEach((line, index) => {
         const y = startY + index * lineHeight;
-        renderTextLine(ctx, line, displayWidth / 2, y, renderColor);
+        renderTextLine(ctx, line, displayWidth / 2, y, renderColor);  // Remove currentSelection parameter
       });
-
-      updateDimensionDisplay();
+      
+      // Get actual text bounding box and draw dimension lines
+      const bbox = getTextBoundingBox(ctx, allText, displayWidth / 2, displayHeight / 2, fontSize, fontFamily);
+      
+      if (bbox && currentSelection.font && currentSelection.size) {
+        const dimensions = calculateTextDimensions(allText, currentSelection.font, currentSelection.size.multiplier);
+        
+        // Add extra padding to account for glow effect
+        const glowPadding = currentSelection.glowEnabled ? 20 : 5;
+        const margin = 50;
+        
+        const visualTop = bbox.top - glowPadding;
+        const visualBottom = bbox.bottom + glowPadding;
+        const visualLeft = bbox.left - glowPadding;
+        const visualRight = bbox.right + glowPadding;
+        
+        // Height indicator (left side)
+        drawDimensionLine(
+          ctx,
+          visualLeft - margin, visualTop,
+          visualLeft - margin, visualBottom,
+          dimensions.heightIn + 'in',
+          true
+        );
+        
+        // Width indicator (bottom)
+        drawDimensionLine(
+          ctx,
+          visualLeft, visualBottom + margin,
+          visualRight, visualBottom + margin,
+          dimensions.widthIn + 'in',
+          false
+        );
+        
+        // Store dimensions
+        currentSelection.boxDimensions = {
+          width: dimensions.widthCm,
+          height: dimensions.heightCm,
+          numberOfLines: dimensions.numberOfLines,
+          heightInInches: dimensions.heightIn,
+          widthInInches: dimensions.widthIn,
+          lineHeights: dimensions.lineHeights
+        };
+      }
     }).catch(err => {
       console.warn('Font loading failed, using fallback:', err);
-      // Clear and render with fallback
-      ctx.clearRect(0, 0, displayWidth, displayHeight);
-      ctx.font = 'bold 80px cursive';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const allText = currentSelection.customText || 'Your Text';
-      const lines = allText.split('\\n').filter(line => line.trim().length > 0);
-      
-      if (lines.length === 0) {
-        lines.push('Your Text');
-      }
-      
-      const lineHeight = 80 * 1.2;
-      const totalHeight = lines.length * 80 + (lines.length - 1) * (lineHeight - 80);
-      const startY = displayHeight / 2 - totalHeight / 2 + 80 / 2;
-      
-      const renderColor = getCurrentRenderColor();
-      
-      lines.forEach((line, index) => {
-        const y = startY + index * lineHeight;
-        ctx.fillStyle = renderColor;
-        ctx.fillText(line, displayWidth / 2, y);
-      });
-      
-      updateDimensionDisplay();
     });
   }
 
-  function renderTextLine(ctx, text, x, y, color) {
-    if (currentSelection.glowEnabled) {
+  // REPLACE THIS FUNCTION (around line 400-420)
+  function renderTextLine(ctx, text, x, y, color) {  // Remove currentSelection parameter
+    if (currentSelection.glowEnabled) {  // Use global currentSelection
       const rgbColor = hexToRgb(color);
+      
       const textColor = 'rgb(' + 
-        Math.round(rgbColor.r * 0.1 + 255 * 0.9) + ',' +
-        Math.round(rgbColor.g * 0.1 + 255 * 0.9) + ',' +
-        Math.round(rgbColor.b * 0.1 + 255 * 0.9) + ')';
+        Math.round(rgbColor.r * 0.2 + 255 * 0.8) + ',' +
+        Math.round(rgbColor.g * 0.2 + 255 * 0.8) + ',' +
+        Math.round(rgbColor.b * 0.2 + 255 * 0.8) + ')';
+      
+      // 5 layers of glow
+      ctx.shadowBlur = 80;
+      ctx.shadowColor = color;
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
       
       ctx.shadowBlur = 40;
       ctx.shadowColor = color;
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+      
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = color;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+      
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = color;
+      ctx.globalAlpha = 1;
       ctx.fillStyle = textColor;
       ctx.fillText(text, x, y);
       
       ctx.shadowBlur = 0;
+      ctx.fillStyle = textColor;
       ctx.fillText(text, x, y);
+      
+      ctx.globalAlpha = 1;
     } else {
       ctx.fillStyle = color;
       ctx.fillText(text, x, y);
     }
   }
 
-  function updateDimensionDisplay() {
-    if (!currentSelection.font || !currentSelection.size) return;
+  // ============================================
+  // UPDATED: Using new canvas-based calculations
+  // ============================================
+  function drawDimensionLine(ctx, x1, y1, x2, y2, label, isVertical = false) {
+    ctx.save();
     
-    const allText = currentSelection.customText || 'Your Text';
-    const lines = allText.split('\\n').filter(line => line.trim().length > 0);
+    // Line color - subtle but visible
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 2;
     
-    if (lines.length === 0) {
-      lines.push('Your Text');
-    }
+    // Draw main line
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
     
-    const font = currentSelection.font;
-    const sizeMultiplier = currentSelection.size.multiplier;
-    
-    // Check if line contains uppercase letters
-    function hasUppercase(text) {
-      return /[A-Z]/.test(text);
-    }
-    
-    // Calculate height for each line based on character case
-    let lineHeights = [];
-    let maxWidth = 0;
-    
-    lines.forEach(line => {
-      let lineHeight;
-      console.log(hasUppercase(line))
-      if (hasUppercase(line)) {
-        // Use uppercase height if line contains any uppercase letters
-        lineHeight = (font.minHeightUppercase || 10) * sizeMultiplier;
-      } else {
-        // Use lowercase height for lines with only lowercase letters
-        lineHeight = (font.minHeightLowercase || font.minHeightUppercase * 0.7 || 7) * sizeMultiplier;
-      }
-      console.log(lineHeight);
-      lineHeights.push(lineHeight);
+    // Draw end caps (arrows/ticks)
+    const capSize = 8;
+    if (isVertical) {
+      // Top cap
+      ctx.beginPath();
+      ctx.moveTo(x1 - capSize, y1);
+      ctx.lineTo(x1 + capSize, y1);
+      ctx.stroke();
       
-      // Calculate width for this line
-      let lineWidth = 0;
-      for (let char of line) {
-        lineWidth += getActualCharacterLength(char, lineHeight, font.fontFamily);
-      }
-      maxWidth = Math.max(maxWidth, lineWidth);
-      console.log(maxWidth);
-    });
-    
-    // Calculate total height with spacing between lines
-    const totalHeight = lineHeights.reduce((sum, height) => sum + height, 0) + 
-                       (lines.length > 1 ? (lines.length - 1) * lineHeights[0] * 0.5 : 0);
-    
-    // Convert cm to inches (1 inch = 2.54 cm)
-    const heightInInches = Math.ceil(totalHeight / 2.54);
-    const widthInInches = Math.ceil(maxWidth / 2.54);
-    
-    // Update height label and line
-    const heightLabel = document.getElementById('height-label');
-    const heightLine = document.getElementById('height-line');
-    if (heightLabel) heightLabel.textContent = heightInInches + 'in';
-    if (heightLine) {
-      const displayHeight = Math.min(150, totalHeight * 10);
-      heightLine.style.height = displayHeight + 'px';
+      // Bottom cap
+      ctx.beginPath();
+      ctx.moveTo(x2 - capSize, y2);
+      ctx.lineTo(x2 + capSize, y2);
+      ctx.stroke();
+      
+      // Draw label
+      ctx.font = '14px Arial, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const labelY = (y1 + y2) / 2;
+      ctx.fillText(label, x1 - 15, labelY);
+    } else {
+      // Left cap
+      ctx.beginPath();
+      ctx.moveTo(x1, y1 - capSize);
+      ctx.lineTo(x1, y1 + capSize);
+      ctx.stroke();
+      
+      // Right cap
+      ctx.beginPath();
+      ctx.moveTo(x2, y2 - capSize);
+      ctx.lineTo(x2, y2 + capSize);
+      ctx.stroke();
+      
+      // Draw label
+      ctx.font = '14px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const labelX = (x1 + x2) / 2;
+      ctx.fillText(label, labelX, y2 + 15);
     }
     
-    // Update width label and line
-    const widthLabel = document.getElementById('width-label');
-    const widthLine = document.getElementById('width-line');
-    if (widthLabel) widthLabel.textContent = widthInInches + 'in';
-    if (widthLine) {
-      const widthIndicator = document.getElementById('width-indicator');
-      if (widthIndicator) {
-        const canvas = document.getElementById('preview-canvas');
-        if (canvas) {
-          const canvasWidth = canvas.offsetWidth;
-          const textWidth = Math.min(canvasWidth * 0.9, maxWidth * 5);
-          widthIndicator.style.width = textWidth + 'px';
-        }
-      }
-    }
-    
-    // Store dimensions for shipping calculation
-    currentSelection.boxDimensions = {
-      width: maxWidth,
-      height: totalHeight,
-      numberOfLines: lines.length,
-      heightInInches: heightInInches,
-      widthInInches: widthInInches,
-      lineHeights: lineHeights
-    };
+    ctx.restore();
   }
 
-  function getCurrentRenderColor() {
+  function getTextBoundingBox(ctx, text, x, y, fontSize, fontFamily) {
+    const lines = text.split('\\n').filter(line => line.trim().length > 0);
+    if (lines.length === 0) return null;
+    
+    ctx.font = \`bold \${fontSize}px "\${fontFamily}", cursive\`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * fontSize + (lines.length - 1) * (lineHeight - fontSize);
+    const startY = y - totalTextHeight / 2 + fontSize / 2;
+    
+    // Find widest line and measure actual bounds
+    let maxWidth = 0;
+    let maxAscent = 0;
+    let maxDescent = 0;
+    
+    lines.forEach((line, index) => {
+      const metrics = ctx.measureText(line);
+      const lineY = startY + index * lineHeight;
+      
+      // Get actual bounding box metrics (includes ascenders/descenders)
+      const ascent = metrics.actualBoundingBoxAscent || fontSize * 0.8;
+      const descent = metrics.actualBoundingBoxDescent || fontSize * 0.2;
+      
+      maxWidth = Math.max(maxWidth, metrics.width);
+      
+      // Track the highest ascent and lowest descent across all lines
+      if (index === 0) {
+        maxAscent = ascent;
+      }
+      if (index === lines.length - 1) {
+        maxDescent = descent;
+      }
+    });
+    
+    // Calculate actual top and bottom including ascenders/descenders
+    const firstLineY = startY;
+    const lastLineY = startY + (lines.length - 1) * lineHeight;
+    
+    const actualTop = firstLineY - maxAscent;
+    const actualBottom = lastLineY + maxDescent;
+    const actualHeight = actualBottom - actualTop;
+    
+    return {
+      left: x - maxWidth / 2,
+      right: x + maxWidth / 2,
+      top: actualTop,
+      bottom: actualBottom,
+      width: maxWidth,
+      height: actualHeight
+    };
+  }
+  function getCurrentRenderColor() {  // Remove currentSelection parameter
     if (!currentSelection.color) return '#ff1493';
     
     const colorObj = currentSelection.color;
@@ -473,6 +713,7 @@ export const loader = async ({ params, request }) => {
     
     return colorObj.colors[0];
   }
+
 
   function startColorAnimation(colorObj) {
     if (currentSelection.colorAnimationInterval) {
@@ -502,7 +743,7 @@ export const loader = async ({ params, request }) => {
   }
   
   function hexToRgb(hex) {
-    const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
@@ -803,62 +1044,32 @@ export const loader = async ({ params, request }) => {
     return height * characterRatio * multiplier;
   }
 
-  function calculatePrice() {
+  function calculatePrice() {  // Remove (config, currentSelection) parameters
     if (!currentSelection.font || !currentSelection.size) {
-      updatePrice(0);
+      updatePrice(0);  // Add this
       return;
     }
 
     const allText = currentSelection.customText || 'Your Text';
-    const lines = allText.split('\\\\n').filter(line => line.trim().length > 0);
-    
-    if (lines.length === 0) {
-      lines.push('Your Text');
-    }
-
     const font = currentSelection.font;
     const sizeMultiplier = currentSelection.size.multiplier;
     
     const pricing = config?.pricings?.find(p => p._id === font.pricingId);
     if (!pricing) {
-      updatePrice(0);
+      updatePrice(0);  // Add this
       return;
     }
 
     let totalPrice = 0;
 
-    if (pricing.letterPricingType === 'fixed') {
-      const totalLetterCount = lines.reduce((sum, line) => sum + line.length, 0);
-      let boundary = pricing.sizeBoundaries?.[0];
-      
-      const pricePerLetter = parseFloat(boundary?.pricePerLetter || 0);
-      const signStartPrice = parseFloat(boundary?.signStartPrice || 0);
-      
-      totalPrice = signStartPrice + (totalLetterCount * pricePerLetter);
-      
-    } else if (pricing.letterPricingType === 'material') {
-      const height = (font.minHeightUppercase || 10) * sizeMultiplier;
-      
-      let boundary = pricing.sizeBoundaries?.[0];
-      const pricePerCm = parseFloat(boundary?.materialPrice || 0); // This should be price per cm
-      const signStartPrice = parseFloat(boundary?.signStartPrice || 0);
-      
-      // Calculate length for each character
-      let totalLengthInCm = 0;
-      
-      lines.forEach(line => {
-        for (let char of line) {
-          // Get actual rendered width for this character
-          const charLength = getActualCharacterLength(char, height, font.fontFamily);
-          totalLengthInCm += charLength;
-        }
-      });
-      
-      // Formula: Length * Price per cm
-      totalPrice = signStartPrice + (totalLengthInCm * pricePerCm);
+    // Choose pricing method based on letterPricingType
+    if (pricing.letterPricingType === 'material') {
+      totalPrice = calculateMaterialBasedPrice(allText, font, sizeMultiplier, pricing);
+    } else if (pricing.letterPricingType === 'fixed') {
+      totalPrice = calculateFixedPricePerLetter(allText, pricing);
     }
 
-    // Add additional pricing
+    // Add additional pricing for options
     if (currentSelection.color?.additionalPricing === 'basePrice') {
       totalPrice += parseFloat(currentSelection.color.basePrice || 0);
     }
@@ -869,22 +1080,28 @@ export const loader = async ({ params, request }) => {
       totalPrice += parseFloat(currentSelection.hangingOption.basePrice || 0);
     }
 
-    updatePrice(totalPrice);
+    updatePrice(totalPrice);  // Add this - was missing!
   }
-  function getActualCharacterLength(char, heightInCm, fontFamily) {
+  
+
+  function getMaterialLength(char, heightInCm, fontFamily) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const measurementFontSize = 1000;
     ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
     const metrics = ctx.measureText(char);
-    console.log(metrics);
-    const pixelWidth = (metrics.actualBoundingBoxRight || 0) + (metrics.actualBoundingBoxLeft || 0);
-    console.log('--->Pixel Width'+pixelWidth);
-    const charWidth = pixelWidth || metrics.width;
+    
+    // For material cost, we use the actual character width without extra spacing
+    const charWidth = metrics.width;
     const widthToHeightRatio = charWidth / measurementFontSize;
-    return heightInCm * widthToHeightRatio;
+    const displayWidth = heightInCm * widthToHeightRatio;
+    
+    // Material length is approximately 1.4-1.5x the display width
+    // This accounts for the tube following the character outline (top, bottom, curves)
+    const MATERIAL_PATH_MULTIPLIER = 1.45;
+    
+    return displayWidth * MATERIAL_PATH_MULTIPLIER;
   }
-
   function updatePrice(price) {
     const el = document.getElementById('total-price');
     if (el) el.textContent = 'Rs ' + price.toFixed(2);
