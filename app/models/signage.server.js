@@ -219,6 +219,7 @@ export async function getAcrylicShapes(shop, customizerId = null) {
 }
 
 export async function addAcrylicShape(shop, shapeData, customizerId = null) {
+  console.log('sss-',shapeData);
   const db = await getDb();
   const result = await db.collection(collections.acrylicShapes).insertOne({
     shop,

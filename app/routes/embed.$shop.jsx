@@ -20,7 +20,7 @@ export const loader = async ({ params, request }) => {
   // Load custom fonts CSS
   const fontLink = document.createElement('link');
   fontLink.rel = 'stylesheet';
-  fontLink.href = '${appUrl}/api/fonts/' + SHOP_DOMAIN;
+  fontLink.href = '${appUrl}/api/fonts/' + SHOP_DOMAIN; 
   document.head.appendChild(fontLink);
 
   let config = null;
@@ -48,25 +48,72 @@ export const loader = async ({ params, request }) => {
   // NEW: Canvas-based measurement functions
   // ============================================
   
+
   /**
-   * Get actual character width using canvas measurement
-   */
-  function getActualCharacterLength(char, heightInCm, fontFamily) {
+ * Get character metrics using canvas measurement
+ * Returns the actual bounding box height of a character
+ */
+  function getCharacterMetrics(char, fontFamily) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const measurementFontSize = 1000;
+    
     ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
     const metrics = ctx.measureText(char);
     
-    const pixelWidth = (metrics.actualBoundingBoxRight || 0) + (metrics.actualBoundingBoxLeft || 0);
-    const charWidth = pixelWidth || metrics.width;
-    const widthToHeightRatio = charWidth / measurementFontSize;
-    return heightInCm * widthToHeightRatio;
+    const ascent = metrics.actualBoundingBoxAscent || measurementFontSize * 0.8;
+    const descent = metrics.actualBoundingBoxDescent || measurementFontSize * 0.2;
+    const totalHeight = ascent + descent;
+    const width = metrics.width;
+    
+    return {
+      height: totalHeight,
+      width: width,
+      ascent: ascent,
+      descent: descent,
+      heightRatio: totalHeight / measurementFontSize,
+      widthRatio: width / measurementFontSize
+    };
   }
 
   /**
+   * Find the shortest character in the text
+   * This character will receive the minimum height
+   */
+  function findShortestCharacter(text, fontFamily) {
+    const allChars = text.split('').filter(char => char.trim().length > 0);
+    
+    if (allChars.length === 0) return null;
+    
+    let shortestChar = allChars[0];
+    let shortestHeight = getCharacterMetrics(allChars[0], fontFamily).height;
+    
+    allChars.forEach(char => {
+      const metrics = getCharacterMetrics(char, fontFamily);
+      if (metrics.height < shortestHeight) {
+        shortestHeight = metrics.height;
+        shortestChar = char;
+      }
+    });
+    
+    return {
+      char: shortestChar,
+      metrics: getCharacterMetrics(shortestChar, fontFamily)
+    };
+  }
+
+
+  /**
+   * Check if character is uppercase
+   */
+  function isUppercase(char) {
+    return /[A-Z]/.test(char);
+  }
+  
+  /**
    * Calculate text dimensions with uppercase/lowercase handling
    */
+  
   function calculateTextDimensions(text, font, sizeMultiplier) {
     const lines = text.split('\\n').filter(line => line.trim().length > 0);
     
@@ -77,58 +124,88 @@ export const loader = async ({ params, request }) => {
         widthIn: 0, 
         heightIn: 0, 
         numberOfLines: 0,
-        lineHeights: []
+        lineHeights: [],
+        shortestChar: null
       };
     }
     
-    // Check if line has uppercase letters
-    const hasUppercase = (text) => /[A-Z]/.test(text);
+    // STEP 1: Find the shortest character across ALL text
+    const allText = lines.join('');
+    const shortestCharInfo = findShortestCharacter(allText, font.fontFamily);
     
+    if (!shortestCharInfo) {
+      return { 
+        widthCm: 0, 
+        heightCm: 0, 
+        widthIn: 0, 
+        heightIn: 0, 
+        numberOfLines: 0,
+        lineHeights: [],
+        shortestChar: null
+      };
+    }
+    
+    // STEP 2: Determine minimum height based on shortest character type
+    const shortestIsUppercase = isUppercase(shortestCharInfo.char);
+    const minHeight = shortestIsUppercase 
+      ? (font.minHeightUppercase || 10)
+      : (font.minHeightLowercase || font.minHeightUppercase * 0.7 || 7);
+    
+    // Apply size multiplier
+    const actualMinHeight = minHeight * sizeMultiplier;
+    
+    // STEP 3: Calculate scaling factor
+    const scalingFactor = actualMinHeight / shortestCharInfo.metrics.height;
+    
+    // STEP 4: Calculate dimensions for each line
     let lineHeights = [];
     let maxWidth = 0;
-    let hasAnyUppercase = false;
     
-    lines.forEach(line => {
-      let lineHeight;
-      if (hasUppercase(line)) {
-        lineHeight = (font.minHeightUppercase || 10) * sizeMultiplier;
-        hasAnyUppercase = true;
-      } else {
-        lineHeight = (font.minHeightLowercase || font.minHeightUppercase * 0.7 || 7) * sizeMultiplier;
-      }
-      
-      lineHeights.push(lineHeight);
-      
-      // Calculate DISPLAY width for this line
+    lines.forEach((line, lineIndex) => {
+      let lineMaxAscent = 0;
+      let lineMaxDescent = 0;
       let lineWidth = 0;
+      
       for (let char of line) {
-        lineWidth += getActualCharacterWidth(char, lineHeight, font.fontFamily);
+        const charMetrics = getCharacterMetrics(char, font.fontFamily);
+        const scaledAscent = charMetrics.ascent * scalingFactor;
+        const scaledDescent = charMetrics.descent * scalingFactor;
+        const scaledWidth = charMetrics.width * scalingFactor;
+        
+        const NEON_SPACING_MULTIPLIER = 1.0;
+        const actualWidth = scaledWidth * NEON_SPACING_MULTIPLIER;
+        
+        lineMaxAscent = Math.max(lineMaxAscent, scaledAscent);
+        lineMaxDescent = Math.max(lineMaxDescent, scaledDescent);
+        lineWidth += actualWidth;
       }
+      
+      const lineHeight = lineMaxAscent + lineMaxDescent;
+      lineHeights.push(lineHeight);
       maxWidth = Math.max(maxWidth, lineWidth);
     });
     
-    // Different vertical padding for uppercase vs lowercase
-    const VERTICAL_PADDING_UPPERCASE = 1.35; // 35% padding for uppercase
-    const VERTICAL_PADDING_LOWERCASE = 1.15; // 15% padding for lowercase
+    // STEP 5: Calculate total height with line spacing
+    const LINE_SPACING_RATIO = 0.1;
+    const avgLineHeight = lineHeights.reduce((sum, h) => sum + h, 0) / lineHeights.length;
+    const lineSpacing = avgLineHeight * LINE_SPACING_RATIO;
+    
+    const totalTextHeight = lineHeights.reduce((sum, height) => sum + height, 0) + 
+                            (lines.length > 1 ? (lines.length - 1) * lineSpacing : 0);
+    
+    // STEP 6: Add vertical padding
+    const hasAnyUppercase = /[A-Z]/.test(allText);
+    const VERTICAL_PADDING_UPPERCASE = 1.05;
+    const VERTICAL_PADDING_LOWERCASE = 1.02;
     
     const VERTICAL_PADDING_MULTIPLIER = hasAnyUppercase 
       ? VERTICAL_PADDING_UPPERCASE 
       : VERTICAL_PADDING_LOWERCASE;
     
-    // Line spacing
-    const LINE_SPACING_RATIO = 0.35;
-    const avgLineHeight = lineHeights.reduce((sum, h) => sum + h, 0) / lineHeights.length;
-    const lineSpacing = avgLineHeight * LINE_SPACING_RATIO;
-    
-    // Calculate total height with spacing
-    const totalTextHeight = lineHeights.reduce((sum, height) => sum + height, 0) + 
-                          (lines.length > 1 ? (lines.length - 1) * lineSpacing : 0);
-    
-    // Add vertical padding
     const totalHeight = totalTextHeight * VERTICAL_PADDING_MULTIPLIER;
     
-    // Add horizontal padding (minimum 2cm on each side for mounting)
-    const HORIZONTAL_PADDING_CM = 4; // 2cm each side
+    // STEP 7: Add horizontal padding
+    const HORIZONTAL_PADDING_CM = 1;
     const totalWidth = maxWidth + HORIZONTAL_PADDING_CM;
     
     // Round up to whole inches
@@ -141,27 +218,60 @@ export const loader = async ({ params, request }) => {
       widthIn: widthInInches,
       heightIn: heightInInches,
       numberOfLines: lines.length,
-      lineHeights: lineHeights
+      lineHeights: lineHeights,
+      shortestChar: shortestCharInfo.char,
+      shortestCharHeight: actualMinHeight,
+      scalingFactor: scalingFactor
     };
   }
-  function getActualCharacterWidth(char, heightInCm, fontFamily) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const measurementFontSize = 1000;
-    ctx.font = \`bold \${measurementFontSize}px "\${fontFamily}"\`;
-    const metrics = ctx.measureText(char);
+
+  function getActualCharacterWidth(char, shortestCharHeight, scalingFactor, fontFamily) {
+    const charMetrics = getCharacterMetrics(char, fontFamily);
+    const scaledWidth = charMetrics.width * scalingFactor;
     
-    // Use the full width metric which includes spacing
-    const charWidth = metrics.width;
-    
-    // Calculate base ratio
-    const widthToHeightRatio = charWidth / measurementFontSize;
-    
-    // CRITICAL: Add spacing multiplier for physical neon sign spacing
-    // Neon signs need ~25-30% extra space for mounting, wiring, and visual spacing
+    // Add spacing multiplier for physical neon sign spacing
     const NEON_SPACING_MULTIPLIER = 1.3;
+    return scaledWidth * NEON_SPACING_MULTIPLIER;
+  }
+
+  /**
+   * Calculate material length for a character (for pricing)
+   */
+  function getMaterialLength(char, shortestCharHeight, scalingFactor, fontFamily) {
+    const charMetrics = getCharacterMetrics(char, fontFamily);
+    const scaledWidth = charMetrics.width * scalingFactor;
     
-    return heightInCm * widthToHeightRatio * NEON_SPACING_MULTIPLIER;
+    // Material length is approximately 1.45x the display width
+    // This accounts for the tube following the character outline
+    const MATERIAL_PATH_MULTIPLIER = 1.45;
+    
+    return scaledWidth * MATERIAL_PATH_MULTIPLIER;
+  }
+
+  /**
+   * Find size boundary that fits the sign dimensions
+   */
+  function findSizeBoundary(widthCm, heightCm, sizeBoundaries) {
+    if (!sizeBoundaries || sizeBoundaries.length === 0) {
+      return null;
+    }
+    
+    const sortedBoundaries = [...sizeBoundaries].sort((a, b) => {
+      const aWidth = parseFloat(a.maxWidth || Infinity);
+      const bWidth = parseFloat(b.maxWidth || Infinity);
+      return aWidth - bWidth;
+    });
+    
+    for (let boundary of sortedBoundaries) {
+      const maxWidth = parseFloat(boundary.maxWidth || Infinity);
+      const maxHeight = parseFloat(boundary.maxHeight || Infinity);
+      
+      if (widthCm <= maxWidth && heightCm <= maxHeight) {
+        return boundary;
+      }
+    }
+    
+    return sortedBoundaries[sortedBoundaries.length - 1];
   }
   
   function findSizeBoundary(widthCm, heightCm, sizeBoundaries) {
@@ -191,9 +301,9 @@ export const loader = async ({ params, request }) => {
   }
   function calculateMaterialBasedPrice(text, font, sizeMultiplier, pricing) {
     const lines = text.split('\\n').filter(line => line.trim().length > 0);
-    const hasUppercase = (text) => /[A-Z]/.test(text);
+    const allText = lines.join('');
     
-    // Get sign dimensions to find appropriate size boundary
+    // Get dimensions to find appropriate size boundary
     const dimensions = calculateTextDimensions(text, font, sizeMultiplier);
     const sizeBoundary = findSizeBoundary(dimensions.widthCm, dimensions.heightCm, pricing.sizeBoundaries);
     
@@ -204,24 +314,20 @@ export const loader = async ({ params, request }) => {
     const materialPricePerCm = parseFloat(sizeBoundary.materialPrice || 0);
     const signStartPrice = parseFloat(sizeBoundary.signStartPrice || 0);
     
-    // Calculate total MATERIAL length (cutting path) for all characters
+    // Calculate total material length using the scaling factor
     let totalMaterialLength = 0;
     
-    lines.forEach(line => {
-      // Get height for this line
-      const lineHasUppercase = hasUppercase(line);
-      const lineHeight = lineHasUppercase 
-        ? (font.minHeightUppercase || 10) * sizeMultiplier
-        : (font.minHeightLowercase || (font.minHeightUppercase || 10) * 0.7) * sizeMultiplier;
-      
-      // Calculate material length for each character
-      for (let char of line) {
-        const charMaterialLength = getMaterialLength(char, lineHeight, font.fontFamily);
-        totalMaterialLength += charMaterialLength;
-      }
-    });
+    for (let char of allText) {
+      if (char.trim().length === 0) continue;
+      const charMaterialLength = getMaterialLength(
+        char, 
+        dimensions.shortestCharHeight, 
+        dimensions.scalingFactor, 
+        font.fontFamily
+      );
+      totalMaterialLength += charMaterialLength;
+    }
     
-    // Total price = Start Price + (Total Material Length × Price per cm)
     const totalPrice = signStartPrice + (totalMaterialLength * materialPricePerCm);
     
     return totalPrice;
@@ -897,38 +1003,113 @@ export const loader = async ({ params, request }) => {
 
     document.getElementById('acrylic-shape-section').style.display = 'block';
     const list = document.getElementById('acrylic-shape-list');
+    
     shapes.forEach((s, idx) => {
       const div = document.createElement('div');
       div.style.cssText = \`
-        padding:8px;
-        text-align:center;
+        padding:12px 8px;
+        text-align:left;
         border:2px solid #333;
         background:#1a1a1a;
         border-radius:6px;
         cursor:pointer;
         transition: all 0.2s ease;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       \`;
       
+      // Thumbnail image on right side
       if (s.imageUrl) {
         const img = document.createElement('img');
         img.src = s.imageUrl;
-        img.style.cssText = 'width:100%; height:60px; object-fit:contain; margin-bottom:4px;';
+        img.style.cssText = 'width:50px; height:50px; object-fit:contain; flex-shrink:0; order: 2;filter: invert(1);';
         div.appendChild(img);
       }
       
+      // Label container on left
+      const labelContainer = document.createElement('div');
+      labelContainer.style.cssText = 'display:flex; flex-direction:column; gap:2px; flex:1; order: 1;';
+      
       const label = document.createElement('div');
       label.textContent = s.name;
-      label.style.cssText = 'font-size:11px; font-weight:500;';
-      div.appendChild(label);
+      label.style.cssText = 'font-size:12px; font-weight:600; color:#fff;';
+      labelContainer.appendChild(label);
+      
+      if (s.basePrice && parseFloat(s.basePrice) > 0) {
+        const price = document.createElement('div');
+        price.textContent = '+USD' + parseFloat(s.basePrice).toFixed(0);
+        price.style.cssText = 'font-size:11px; color:#0066cc; font-weight:500;';
+        labelContainer.appendChild(price);
+      } else {
+        const freeLabel = document.createElement('div');
+        freeLabel.textContent = 'Free';
+        freeLabel.style.cssText = 'font-size:11px; color:#4ade80; font-weight:500;';
+        labelContainer.appendChild(freeLabel);
+      }
+      
+      div.appendChild(labelContainer);
+      
+      // Create lightbox tooltip for this specific div
+      if (s.imageUrl) {
+        const tooltip = document.createElement('div');
+        tooltip.style.cssText = \`
+          position: absolute;
+          bottom: calc(100% + 10px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: white;
+          padding: 15px;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          z-index: 1000;
+          display: none;
+          pointer-events: none;
+          max-width: 250px;
+        \`;
+        
+        const tooltipImg = document.createElement('img');
+        tooltipImg.src = s.imageUrl;
+        tooltipImg.style.cssText = 'width: 100%; height: auto; display: block; border-radius: 4px;';
+        tooltip.appendChild(tooltipImg);
+        
+        // Arrow pointing down
+        const arrow = document.createElement('div');
+        arrow.style.cssText = \`
+          position: absolute;
+          bottom: -8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-top: 8px solid white;
+        \`;
+        tooltip.appendChild(arrow);
+        
+        div.appendChild(tooltip);
+        
+        // Show tooltip on hover
+        tooltip.addEventListener('mouseenter', () => {
+          tooltip.style.display = 'block';
+        });
+        
+        div.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+      }
       
       div.addEventListener('click', () => {
-        document.querySelectorAll('#acrylic-shape-list div').forEach(el => {
+        document.querySelectorAll('#acrylic-shape-list > div').forEach(el => {
           el.style.borderColor = '#333';
           el.style.background = '#1a1a1a';
         });
         div.style.borderColor = '#0066cc';
         div.style.background = 'rgba(0,102,204,0.1)';
         currentSelection.acrylicShape = s;
+        renderCanvas();
         calculatePrice();
       });
       

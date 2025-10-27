@@ -5,7 +5,7 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
   const fetcher = useFetcher();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [newShape, setNewShape] = useState({ name: "", imageUrl: "", description: "" });
+  const [newShape, setNewShape] = useState({ name: "", imageUrl: "", description: "",additionalPricing: "none", basePrice: ""  });
   const [editShape, setEditShape] = useState({});
   const [errors, setErrors] = useState({});
   const [dragOver, setDragOver] = useState(false);
@@ -22,7 +22,7 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewShape({ ...newShape, imageUrl: reader.result });
+        setNewShape({ ...newShape, imageUrl: reader.result});
       };
       reader.readAsDataURL(file);
     } else {
@@ -55,16 +55,19 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
       return;
     }
     setErrors({});
-    setNewShape({ name: "", imageUrl: "", description: "" });
+    setNewShape({ name: "", imageUrl: "", description: "",additionalPricing: "none", basePrice: "" });
     setShowAddForm(false);
   };
 
   const handleEditClick = (shape) => {
     setEditingId(shape._id.toString());
+    console.log(shape)
     setEditShape({
       name: shape.name,
       imageUrl: shape.imageUrl || "",
-      description: shape.description || ""
+      description: shape.description || "",
+      additionalPricing: shape.additionalPricing || "none",
+      basePrice: shape.basePrice || ""
     });
   };
 
@@ -75,12 +78,14 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
   };
 
   const handleUpdate = (e) => {
+    console.log('=-----',editShape);
     const validationErrors = validateShape(editShape.name);
     if (Object.keys(validationErrors).length > 0) {
       e.preventDefault();
       setErrors(validationErrors);
       return;
     }
+
     setErrors({});
     setEditingId(null);
     setEditShape({});
@@ -160,7 +165,49 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
                   }}
                 />
               </div>
-
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Additional Pricing</label>
+                <select
+                  value={newShape.additionalPricing}
+                  onChange={(e) => setNewShape({ ...newShape, additionalPricing: e.target.value })}
+                  name="additionalPricing"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="none">None</option>
+                  <option value="basePrice">Base Price</option>
+                </select>
+              </div>
+              {newShape.additionalPricing === 'basePrice' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Base Price *</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px', color: '#666' }}>$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newShape.basePrice}
+                      onChange={(e) => setNewShape({ ...newShape, basePrice: e.target.value })}
+                      name="basePrice"
+                      placeholder="0.00"
+                      required
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}    
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Shape Image</label>
                 <div
@@ -321,6 +368,49 @@ export default function AcrylicShapeSettings({ acrylicShapes }) {
                             />
                           </div>
                         </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Additional Pricing</label>
+                            <select
+                              value={editShape.additionalPricing}
+                              onChange={(e) => setEditShape({ ...editShape, additionalPricing: e.target.value })}
+                              name="additionalPricing"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                background: 'white'
+                              }}
+                            >
+                              <option value="none">None</option>
+                              <option value="basePrice">Base Price</option>
+                            </select>
+                          </div>
+                          {editShape.additionalPricing === 'basePrice' && (
+                            <div>
+                              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Base Price *</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px', color: '#666' }}>$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editShape.basePrice}
+                                  onChange={(e) => setEditShape({ ...editShape, basePrice: e.target.value })}
+                                  name="basePrice"
+                                  placeholder="0.00"
+                                  required
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    fontSize: '14px'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         <div style={{ marginBottom: '16px' }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>Shape Image</label>
                           {editShape.imageUrl && (
